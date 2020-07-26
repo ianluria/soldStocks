@@ -48,6 +48,7 @@ def loadCSV():
             # Ignore first line which is the column names header row
             if index > 0:
                 saveRow = Categories()
+
                 saveRow.date = row[0].strip()
                 saveRow.trackItem = row[1].strip()
                 saveRow.retailer = row[2].strip()
@@ -60,6 +61,8 @@ def loadCSV():
                 saveRow.clientProductGroup = row[9].strip()
                 saveRow.category = row[10].strip()
                 saveRow.subCategory = row[11].strip()
+
+                #Run error checking on row
 
                 db.session.add(saveRow)
 
