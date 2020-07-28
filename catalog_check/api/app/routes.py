@@ -11,9 +11,7 @@ from flask import request
 def index():
     return 'h'
 
-# Loads file from user into database
-
-
+# Loads CSV file from user into database
 @app.route('/loadCSV', methods=['PUT'])
 def loadCSV():
 
@@ -32,15 +30,13 @@ def loadCSV():
 
         return True
 
-    
-
      # Error checking for incomplete file upload
-    if 'file' not in request.files or request.files['file'].filename == '':
+    if 'file' not in request.files or request.files['file'].filename == '' or not allowed_file(request.files['file'].filename):
         return {"status": {"error": "Must include a CSV file."}}
 
     # check to make sure file is csv
     # any way to prevent attacks from loading file?
-    if request.files['file'] and allowed_file(request.files['file'].filename):
+    if request.files['file']:
 
         # Delete all existing data in table
         Catalog.query.delete()

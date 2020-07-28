@@ -16,10 +16,10 @@ def checkRowForErrors(row):
         thisCell = getattr(row, column, None)
         errorFound = False
 
-        if thisCell in missingValueCheck and not thisCell:
+        if column in missingValueCheck and not thisCell:
             errorFound = True
 
-        elif thisCell in basicCharacterLengthCheck and thisCell and len(thisCell > 200):
+        elif column in basicCharacterLengthCheck and thisCell and len(thisCell > 200):
             errorFound = True
 
         if errorFound:
@@ -29,9 +29,10 @@ def checkRowForErrors(row):
         row.titleError = True
 
     if len(row.retailerItemID) != 10:
-        row.retailerItemIDError = False
+        row.retailerItemIDError = True
 
-     if not re.search("([0-9]{4})[/-]([0-9]{2})[/-]([0-9]{2})$", row.date):
-            row.dateError = True
+    # Date must be yyyy(-|/)mm(-|/)dd
+    if not re.match("([0-9]{4})[/-]([0-9]{2})[/-]([0-9]{2})$", row.date):
+        row.dateError = True
 
     return True
