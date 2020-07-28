@@ -19,7 +19,7 @@ def checkRowForErrors(row):
         if column in missingValueCheck and not thisCell:
             errorFound = True
 
-        elif column in basicCharacterLengthCheck and thisCell and len(thisCell > 200):
+        elif column in basicCharacterLengthCheck and thisCell and len(thisCell) > 200:
             errorFound = True
 
         if errorFound:
