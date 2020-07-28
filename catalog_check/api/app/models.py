@@ -3,7 +3,7 @@ from app import db
 
 class Catalog(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
-    date = db.Column(db.Date())
+    date = db.Column(db.String(100))
     dateError = db.Column(db.Boolean())
     trackItem = db.Column(db.String(2000))
     trackItemError = db.Column(db.Boolean())

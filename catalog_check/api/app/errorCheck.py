@@ -1,4 +1,5 @@
 from app.models import Catalog
+import re
 
 
 def checkRowForErrors(row):
@@ -30,6 +31,7 @@ def checkRowForErrors(row):
     if len(row.retailerItemID) != 10:
         row.retailerItemIDError = False
 
-    # date check    
+     if not re.search("([0-9]{4})[/-]([0-9]{2})[/-]([0-9]{2})$", row.date):
+            row.dateError = True
 
     return True

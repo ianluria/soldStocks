@@ -16,6 +16,8 @@ def index():
 
 @app.route('/loadCSV', methods=['PUT'])
 def loadCSV():
+
+    
     def allowed_file(filename):
         return '.' in filename and \
             filename.rsplit('.', 1)[1].lower() in {'csv'}
@@ -30,6 +32,8 @@ def loadCSV():
 
         return True
 
+    
+
      # Error checking for incomplete file upload
     if 'file' not in request.files or request.files['file'].filename == '':
         return {"status": {"error": "Must include a CSV file."}}
@@ -39,7 +43,6 @@ def loadCSV():
     if request.files['file'] and allowed_file(request.files['file'].filename):
 
         # Delete all existing data in table
-        
         Catalog.query.delete()
         db.session.commit()
 
