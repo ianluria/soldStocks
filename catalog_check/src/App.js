@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons'
 
 // import './App.css';
 
@@ -15,12 +17,15 @@ function App() {
         <button onClick={() => setDisplay(<LoadCSVFile />)}>Load CSV File</button>
         <button onClick={() => setDisplay(<ErrorCounts setStatus={setStatus} setDisplay={setDisplay} />)}>Error Counts</button>
       </header>
-      <main>
+      <main className="container">
         {display}
       </main>
     </div>
   );
 }
+
+
+
 
 function ErrorCounts(props) {
 
@@ -40,20 +45,24 @@ function ErrorCounts(props) {
           // console.log(error);
           if (error !== "totalCount") {
             const thisKey = formattedErrorNames[error];
-            errorsArray.push({ label: thisKey, count: data[error] });
+            errorsArray.push({ listKey: error, label: thisKey, count: data[error] });
           }
         }
 
         errorsArray.sort((a, b) => b.count - a.count);
 
         for (let row in errorsArray) {
-          errorsArray[row] = <p>{errorsArray[row].label} : {errorsArray[row].count}</p>
+          errorsArray[row] = <li key={errorsArray[row].listKey} className="list-group-item">{errorsArray[row].label} : {errorsArray[row].count} <FontAwesomeIcon icon={faAngleDown} /></li>
         }
 
         // Add total count to the very beginning
-        errorsArray.unshift(<p>{"Total rows"} : {data.totalCount}</p>)
+        errorsArray.unshift(<li key="totalCount" className="list-group-item">{"Total rows"} : {data.totalCount} <FontAwesomeIcon icon={faAngleDown} /></li>)
 
-        props.setDisplay(errorsArray)
+        const listHTML = <ul className="list group">
+          {errorsArray}
+        </ul>
+
+        props.setDisplay(listHTML)
       });
   });
 
