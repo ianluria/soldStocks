@@ -12,10 +12,11 @@ def index():
     return 'h'
 
 # Loads CSV file from user into database
+
+
 @app.route('/loadCSV', methods=['PUT'])
 def loadCSV():
 
-    
     def allowed_file(filename):
         return '.' in filename and \
             filename.rsplit('.', 1)[1].lower() in {'csv'}
@@ -82,10 +83,15 @@ def loadCSV():
 @app.route('/errorOverview', methods=['GET'])
 def errorOverview():
 
-    # list of all error types
-    errorTypes = ['dateError', 'trackItemError', 'retailerError', 'retailerItemIDError', 'tldError',  'upcError',  'titleError',
-                  'manufacturerError',   'brandError',    'clientProductGroupError',    'categoryError',    'subCategoryError', 'VATCodeError']
+    # dict of all error types
+    errorTypes = {'dateError': 0, 'trackItemError': 0, 'retailerError': 0, 'retailerItemIDError': 0, 'tldError': 0, 'upcError': 0, 'titleError': 0,
+                  'manufacturerError': 0, 'brandError': 0, 'clientProductGroupError': 0, 'categoryError': 0, 'subCategoryError': 0, 'VATCodeError': 0}
 
     # count the number of instances for each error type
+    for key in errorTypes.keys():
+        errorTypes[key] = Catalog.query.filter_by(**{key:True}).count()
+
+    errorTypes['totalCount'] = Catalog.query.count()
 
     # return JSON of error type with count test
+    return errorTypes
