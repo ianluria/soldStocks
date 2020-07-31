@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faAngleDown } from '@fortawesome/free-solid-svg-icons'
-
 // import './App.css';
 
 function App() {
@@ -34,6 +33,12 @@ function ErrorCounts(props) {
     manufacturerError: "Manufacturer Error", brandError: "Brand Error", clientProductGroupError: "Client Product Group Error", categoryError: "Category Error", subCategoryError: "Subcategory Error", VATCodeError: "VAT Code Error"
   }
 
+  function listItemClick(e) {
+
+    console.log(e);
+
+  }
+
   useEffect(() => {
     fetch('/errorOverview')
       .then(response => response.json())
@@ -52,7 +57,18 @@ function ErrorCounts(props) {
         errorsArray.sort((a, b) => b.count - a.count);
 
         for (let row in errorsArray) {
-          errorsArray[row] = <li key={errorsArray[row].listKey} className="list-group-item">{errorsArray[row].label} : {errorsArray[row].count} <FontAwesomeIcon icon={faAngleDown} /></li>
+          errorsArray[row] =
+            <React.Fragment key={errorsArray[row].listKey}>
+              <li className="list-group-item" onClick={listItemClick}>
+                {errorsArray[row].label} : {errorsArray[row].count}
+                <a data-toggle="collapse" href={"#" + errorsArray[row].listKey + "Dropdown"}>
+                  <FontAwesomeIcon icon={faAngleDown} className="rotateIcon" />
+                </a>
+              </li>
+              <li className="show" id={errorsArray[row].listKey + "Dropdown"}>
+                This is where error fix information will be present.
+              </li>
+            </React.Fragment>
         }
 
         // Add total count to the very beginning
