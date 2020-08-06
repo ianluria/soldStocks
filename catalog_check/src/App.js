@@ -20,7 +20,7 @@ function App() {
       <header className="App-header">
         {status}
         <button onClick={() => setDisplay(<LoadCSVFile setCatalogErrors={setCatalogErrors} setDisplay={setDisplay} setStatus={setStatus} />)}>Load CSV File</button>
-        {/* <button onClick={() => setDisplay(<DisplayCatalogErrors setDisplay={setDisplay} />)}>Error Counts</button> */}
+        <button onClick={() => setDisplay(<DisplayCatalogErrors setDisplay={setDisplay} catalogErrors={catalogErrors} />)}>Error Counts</button>
       </header>
       <main className="container">
         <p>{display}</p>
@@ -29,9 +29,20 @@ function App() {
   );
 
 
-  // function handleListItemClick(e) {
+  // if errors are loaded
 
-  //   console.log("CLICK IN", openCollapses[e.currentTarget.id]);
+  // loop through and add to a list Element
+  // add state to monitor clicks for visibility of sub list
+  // return code
+
+
+
+
+
+  function handleListItemClick(e) {
+
+    console.log("CLICK IN", e);
+  }
   //   const updatedOpenCollapse = Object.assign({}, openCollapses);
   //   const thisError = e.currentTarget.id;
   //   updatedOpenCollapse[thisError] = !updatedOpenCollapse[thisError];
@@ -40,71 +51,66 @@ function App() {
   // }
 
 
-  // }
-
-  // function errorCounts(setDisplay) {
-
-  //   let hello = async () => { return "Hello" };
-  //   hello().then((value) => setDisplay(value));
-
 
 }
 
-// function DisplayCatalogErrors(props) {
+function DisplayCatalogErrors(props) {
 
-//   const [loaded, setLoaded] = useState(false);
+  function handleListItemClick(e) {
 
+    for (let error in props.catalogErrors) {
+      if (props.catalogErrors[error].listKey === e.currentTarget.id) {
 
+        console.log("CLICK IN", props.catalogErrors[error].openCollapse);
+      }
+    }
+  }
 
-//   // useEffect(() => {
-//   //   console.log("use effect");
+  // const [open, setOpen] = useState();
 
+  // function handleListItemClick(event) {
+  //   open[event.currentTarget.id] = !open[event.currentTarget.id];
+  // }
 
-//   // props.setOpenCollapses({...openStatusObject})
-//   console.log("open collapses: ", Object.keys(props.openCollapses).length === 0);
-//   if (Object.keys(props.openCollapses).length === 0) {
-//     props.setOpenCollapses(openStatusObject);
-//   }
+  const errorsArray = props.catalogErrors.slice();
 
-//   errorsArray.sort((a, b) => b.count - a.count);
+  errorsArray.sort((a, b) => b.count - a.count);
 
-//   for (let row in errorsArray) {
+  for (let row in errorsArray) {
 
-//     errorsArray[row] =
-//       <React.Fragment key={errorsArray[row].listKey}>
-//         <ListGroup.Item id={errorsArray[row].listKey} onClick={props.handleListItemClick}>
+    // trackOpenDropdowns[errorsArray[row].listKey] = false;
+    // Total count does not need a drop down list item.
+    if (errorsArray[row].listKey === 'totalCount') {
+      errorsArray[row] =
+        <React.Fragment key={errorsArray[row].listKey}>
+          <ListGroup.Item id={errorsArray[row].listKey}>
+            {errorsArray[row].label} : {errorsArray[row].count}
+          </ListGroup.Item>
+        </React.Fragment>;
+    } else {
+      errorsArray[row] =
+        <React.Fragment key={errorsArray[row].listKey}>
+          <ListGroup.Item id={errorsArray[row].listKey} onClick={handleListItemClick}>
+            {errorsArray[row].label} : {errorsArray[row].count}
+            <FontAwesomeIcon icon={faAngleDown} className="rotateIcon" />
+          </ListGroup.Item>
+          <Collapse in={false}>
+            <ListGroup.Item>
+              This is where error fix information will be present.
+          </ListGroup.Item>
+          </Collapse>
+        </React.Fragment>;
+    }
+  }
 
-//           {errorsArray[row].label} : {errorsArray[row].count}
-//           <FontAwesomeIcon icon={faAngleDown} className="rotateIcon" />
+  const listHTML =
+    <ListGroup>
+      {errorsArray}
+    </ListGroup>;
 
-//         </ListGroup.Item>
-//         <Collapse in={props.openCollapses[errorsArray[row].listKey]}>
-//           {/* <Collapse in={false}> */}
-//           <ListGroup.Item>
-//             This is where error fix information will be present.
-//               </ListGroup.Item>
-//         </Collapse>
-//       </React.Fragment>;
-//   }
-
-//   // Add total count to the very beginning
-//   errorsArray.unshift(<li key="totalCount" className="list-group-item">{"Total rows"} : {data.totalCount} <FontAwesomeIcon icon={faAngleDown} /></li>)
-
-//   const listHTML =
-//     <ListGroup>
-//       {errorsArray}
-//     </ListGroup>;
-
-//   setLoaded("true")
-//   props.setDisplay(listHTML)
-
-// });
-// // }, []);
-
-
-// console.log(loaded);
-// return "false";
-// }
+  // setOpen(trackOpenDropdowns)
+  return listHTML;
+}
 
 
 function LoadCSVFile(props) {
@@ -142,7 +148,7 @@ function LoadCSVFile(props) {
             const errorsArray = [];
 
             for (let error in errorsResponseData) {
-              errorsArray.push({ listKey: error, label: formattedErrorNames[error], count: errorsResponseData[error] });
+              errorsArray.push({ listKey: error, label: formattedErrorNames[error], count: errorsResponseData[error], openCollapse: false });
             }
 
             props.setCatalogErrors(errorsArray)
