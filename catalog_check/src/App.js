@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faAngleDown } from '@fortawesome/free-solid-svg-icons'
+import { faAngleDown, faFireExtinguisher } from '@fortawesome/free-solid-svg-icons'
 
 import ListGroup from 'react-bootstrap/ListGroup';
 import Collapse from 'react-bootstrap/Collapse';
 
 // import './App.css';
+
+// when app is starting, check if db is already holding a catalog
+// add error fix information for each error type
+// back end error fixing
+// style page
+
+
+
+
 
 function App() {
 
@@ -20,7 +29,8 @@ function App() {
       <header className="App-header">
         {status}
         <button onClick={() => setDisplay(<LoadCSVFile setCatalogErrors={setCatalogErrors} setDisplay={setDisplay} setStatus={setStatus} />)}>Load CSV File</button>
-        <button onClick={() => setDisplay(<DisplayCatalogErrors setDisplay={setDisplay} catalogErrors={catalogErrors} />)}>Error Counts</button>
+        <button onClick={() => setDisplay(<DisplayCatalogErrors setDisplay={setDisplay} catalogErrors={catalogErrors} setCatalogErrors={setCatalogErrors} />)}>Error Counts</button>
+        {catalogErrors && <p>date error: {catalogErrors[0].openCollapse.toString()}</p>}
       </header>
       <main className="container">
         <p>{display}</p>
@@ -28,57 +38,34 @@ function App() {
     </div>
   );
 
-
   // if errors are loaded
 
   // loop through and add to a list Element
   // add state to monitor clicks for visibility of sub list
   // return code
-
-
-
-
-
-  function handleListItemClick(e) {
-
-    console.log("CLICK IN", e);
-  }
-  //   const updatedOpenCollapse = Object.assign({}, openCollapses);
-  //   const thisError = e.currentTarget.id;
-  //   updatedOpenCollapse[thisError] = !updatedOpenCollapse[thisError];
-  //   setOpenCollapses(updatedOpenCollapse);
-  //   console.log("CLICK OUT", openCollapses[e.currentTarget.id]);
-  // }
-
-
-
 }
 
 function DisplayCatalogErrors(props) {
 
+  const [open, setOpen] = useState({});
+
   function handleListItemClick(e) {
 
-    for (let error in props.catalogErrors) {
-      if (props.catalogErrors[error].listKey === e.currentTarget.id) {
-
-        console.log("CLICK IN", props.catalogErrors[error].openCollapse);
-      }
+    const updatedOpenCollapse = Object.assign({}, open);
+    if (updatedOpenCollapse.hasOwnProperty(e.currentTarget.id)) {
+      updatedOpenCollapse[e.currentTarget.id] = !updatedOpenCollapse[e.currentTarget.id];
+    } else {
+      updatedOpenCollapse[e.currentTarget.id] = true;
     }
+
+    setOpen(updatedOpenCollapse)
+    return;
   }
-
-  // const [open, setOpen] = useState();
-
-  // function handleListItemClick(event) {
-  //   open[event.currentTarget.id] = !open[event.currentTarget.id];
-  // }
 
   const errorsArray = props.catalogErrors.slice();
 
-  errorsArray.sort((a, b) => b.count - a.count);
 
   for (let row in errorsArray) {
-
-    // trackOpenDropdowns[errorsArray[row].listKey] = false;
     // Total count does not need a drop down list item.
     if (errorsArray[row].listKey === 'totalCount') {
       errorsArray[row] =
@@ -94,10 +81,12 @@ function DisplayCatalogErrors(props) {
             {errorsArray[row].label} : {errorsArray[row].count}
             <FontAwesomeIcon icon={faAngleDown} className="rotateIcon" />
           </ListGroup.Item>
-          <Collapse in={false}>
-            <ListGroup.Item>
-              This is where error fix information will be present.
-          </ListGroup.Item>
+          <Collapse id={errorsArray[row].listKey + "Collapse"} in={open[errorsArray[row].listKey]}>
+            <div>
+              <ListGroup.Item>
+                This is where error fix information will be present.
+              </ListGroup.Item>
+            </div>
           </Collapse>
         </React.Fragment>;
     }
@@ -151,7 +140,13 @@ function LoadCSVFile(props) {
               errorsArray.push({ listKey: error, label: formattedErrorNames[error], count: errorsResponseData[error], openCollapse: false });
             }
 
-            props.setCatalogErrors(errorsArray)
+            errorsArray.sort((a, b) => b.count - a.count);
+
+            // Move totalCount to the zero index
+            const returnArray = errorsArray.filter(element => element.listKey !== "totalCount");
+            returnArray.unshift(errorsArray.find(element => element.listKey === "totalCount"));
+
+            props.setCatalogErrors(returnArray)
 
             // return display to home
             props.setDisplay("Finished")
