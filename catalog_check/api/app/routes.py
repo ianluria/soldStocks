@@ -5,6 +5,7 @@ from flask import request
 import re
 
 from datetime import datetime, timedelta, date
+from sqlalchemy import or_
 
 
 # source venv/Scripts/activate
@@ -112,25 +113,69 @@ def errorOverview():
 
 @app.route('/errorFix', methods=['POST'])
 def errorFix():
+    # Compile reg exes first
     dateFormat1 = re.compile("[-/]")
     dateFormat2 = re.compile(
         "^\d{2}[-/]\d{2}[-/]\d{2}$|^\d{2}[-/]\d{2}[-/]\d{4}$")
     dateFormat3 = re.compile("^\d{4}[-/]\d{2}[-/]\d{2}$")
     dateFormat4 = re.compile("^\d+$")
-    # Fix date errors
+    goodCharacters = re.compile("\w+")
 
-   # Test if date string has '-' or '/'
-   if dateFormat1.search(row.date):
-       if dateFormat2.match(row.date):
-           thisDate = date(row.date[6:],row.date[0:2], row.date[3:5])
-       elif dateFormat3.match(row.date):
-           thisDate = date(row.date[0:4],row.date[5:7], row.date[8:10])
-    elif dateFormat4.match(row.date):      
-   # Test if MS julian 
-    thisDate = from_excel_ordinal(row.date) #Need to convert to correct date
+    errorFixCount = 0
 
-    # From: https://stackoverflow.com/questions/29387137/how-to-convert-a-given-ordinal-number-from-excel-to-a-date
-    def from_excel_ordinal(ordinal, _epoch0=datetime(1899, 12, 31)):
-        if ordinal >= 60:
-            ordinal -= 1  # Excel leap year bug, 1900 is not a leap year!
-        return (_epoch0 + timedelta(days=ordinal)).replace(microsecond=0)
+    for row in Catalog.query.all():
+        for key, value in row:
+            if "Error" in key and value:
+
+                # Fix date error
+                if row.dateError:
+                    # Test if date string has '-' or '/'
+                    if dateFormat1.search(row.date):
+                        # MM-DD-YY or MM-DD-YYYY
+                        if dateFormat2.match(row.date):
+                            thisDate = date(
+                                row.date[6:], row.date[0:2], row.date[3:5])
+                        # YYYY-MM-DD
+                        elif dateFormat3.match(row.date):
+                            thisDate = date(
+                                row.date[0:4], row.date[5:7], row.date[8:10])
+
+                    # Test if MS serialized date format
+                    elif dateFormat4.match(row.date):
+
+                        thisDate = from_excel_ordinal(row.date)
+
+                        # From: https://stackoverflow.com/questions/29387137/how-to-convert-a-given-ordinal-number-from-excel-to-a-date
+                        def from_excel_ordinal(ordinal, _epoch0=datetime(1899, 12, 31)):
+                            if ordinal >= 60:
+                                ordinal -= 1  # Excel leap year bug, 1900 is not a leap year!
+                            return (_epoch0 + timedelta(days=ordinal)).replace(microsecond=0)
+
+                    row.date = thisDate.__str__()
+                    errorFixCount += 1
+
+                characterErrors = ['titleError',
+                                   'manufacturerError', 'brandError']
+                for error in characterErrors:
+                    if row[error]:
+                        if goodCharacters.search(row[error]):
+                            listOfGoodCharacters = goodCharacters.findall(
+                                row[error])
+                            row[error] = " ".join(listOfGoodCharacters)
+                            errorFixCount += 1
+
+                # Fix retailer error
+                if row.retailer.lower() != 'amazon':
+                    row.retailer = 'Amazon'
+                    errorFixCount += 1
+
+                # Fix TLD error
+                if row.tld != thisTLD:
+                    row.retailer = thisTLD
+                    errorFixCount += 1
+
+            db.session.add(row)
+            continue  # test this!
+
+    db.session.commit()
+    return  {"status": {"success": f"Repaired {errorFixCount} number of errors."

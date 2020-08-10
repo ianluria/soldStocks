@@ -37,12 +37,6 @@ function App() {
       </main>
     </div>
   );
-
-  // if errors are loaded
-
-  // loop through and add to a list Element
-  // add state to monitor clicks for visibility of sub list
-  // return code
 }
 
 function DisplayCatalogErrors(props) {
