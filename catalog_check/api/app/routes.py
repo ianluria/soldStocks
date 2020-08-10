@@ -2,6 +2,10 @@ from app import app, db
 from app.models import Catalog
 from app.errorCheck import checkRowForErrors
 from flask import request
+import re
+
+from datetime import datetime, timedelta, date
+
 
 # source venv/Scripts/activate
 
@@ -9,7 +13,16 @@ from flask import request
 @app.route('/')
 @app.route('/index')
 def index():
-    return 'h'
+    return 'home page'
+
+
+@app.route('/checkForLoadedCatalog', methods=['GET'])
+def checkForLoadedCatalog():
+    first = Catalog.query.first()
+    if not first:
+        return {"loaded": "Catalog has not been loaded."}
+    else:
+        return {"loaded": "Catalog loaded."}
 
 # Loads CSV file from user into database
 
@@ -89,9 +102,35 @@ def errorOverview():
 
     # count the number of instances for each error type
     for key in errorTypes.keys():
-        errorTypes[key] = Catalog.query.filter_by(**{key:True}).count()
+        errorTypes[key] = Catalog.query.filter_by(**{key: True}).count()
 
     errorTypes['totalCount'] = Catalog.query.count()
 
     # return JSON of error type with count test
     return errorTypes
+
+
+@app.route('/errorFix', methods=['POST'])
+def errorFix():
+    dateFormat1 = re.compile("[-/]")
+    dateFormat2 = re.compile(
+        "^\d{2}[-/]\d{2}[-/]\d{2}$|^\d{2}[-/]\d{2}[-/]\d{4}$")
+    dateFormat3 = re.compile("^\d{4}[-/]\d{2}[-/]\d{2}$")
+    dateFormat4 = re.compile("^\d+$")
+    # Fix date errors
+
+   # Test if date string has '-' or '/'
+   if dateFormat1.search(row.date):
+       if dateFormat2.match(row.date):
+           thisDate = date(row.date[6:],row.date[0:2], row.date[3:5])
+       elif dateFormat3.match(row.date):
+           thisDate = date(row.date[0:4],row.date[5:7], row.date[8:10])
+    elif dateFormat4.match(row.date):      
+   # Test if MS julian 
+    thisDate = from_excel_ordinal(row.date) #Need to convert to correct date
+
+    # From: https://stackoverflow.com/questions/29387137/how-to-convert-a-given-ordinal-number-from-excel-to-a-date
+    def from_excel_ordinal(ordinal, _epoch0=datetime(1899, 12, 31)):
+        if ordinal >= 60:
+            ordinal -= 1  # Excel leap year bug, 1900 is not a leap year!
+        return (_epoch0 + timedelta(days=ordinal)).replace(microsecond=0)
