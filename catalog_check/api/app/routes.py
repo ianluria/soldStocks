@@ -21,9 +21,9 @@ def index():
 def checkForLoadedCatalog():
     first = Catalog.query.first()
     if not first:
-        return {"loaded": "Catalog has not been loaded."}
+        return {"loaded": False}
     else:
-        return {"loaded": "Catalog loaded."}
+        return {"loaded": True}
 
 # Loads CSV file from user into database
 
@@ -90,7 +90,7 @@ def loadCSV():
                 db.session.add(saveRow)
 
         db.session.commit()
-        print(Catalog.query.all())
+        
         return {"status": {"success": f"{request.files['file'].filename} successfully loaded."}}
 
 
@@ -178,4 +178,4 @@ def errorFix():
             continue  # test this!
 
     db.session.commit()
-    return  {"status": {"success": f"Repaired {errorFixCount} number of errors."
+    return  {"status": {"success": f"Repaired {errorFixCount} number of errors."}}

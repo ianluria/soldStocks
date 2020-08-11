@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faAngleDown, faFireExtinguisher } from '@fortawesome/free-solid-svg-icons'
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons'
 
 import ListGroup from 'react-bootstrap/ListGroup';
 import Collapse from 'react-bootstrap/Collapse';
@@ -9,13 +9,7 @@ import Form from 'react-bootstrap/Form';
 // import './App.css';
 
 // when app is starting, check if db is already holding a catalog
-// add error fix information for each error type
-// back end error fixing
 // style page
-
-
-
-
 
 function App() {
 
@@ -23,18 +17,32 @@ function App() {
   const [status, setStatus] = useState();
   const [catalogErrors, setCatalogErrors] = useState();
 
-
+  // Check if there is a catalog loaded in database
+  // If there is, load error status into state
+  useEffect(() => {
+  fetch('/checkForLoadedCatalog')
+    .then(response => response.json())
+    .then(data => {
+      if (data) {
+        generateErrorOverview(setCatalogErrors, setDisplay)
+      } else {
+        setStatus("Load a catalog to get started.")
+      }
+    });
+  },[]);
 
   return (
     <div className="App">
       <header className="App-header">
         {status}
         <button onClick={() => setDisplay(<LoadCSVFile setCatalogErrors={setCatalogErrors} setDisplay={setDisplay} setStatus={setStatus} />)}>Load CSV File</button>
-        <button onClick={() => setDisplay(<DisplayCatalogErrors setDisplay={setDisplay} catalogErrors={catalogErrors} setCatalogErrors={setCatalogErrors} />)}>Error Counts</button>
-        {catalogErrors && <p>date error: {catalogErrors[0].openCollapse.toString()}</p>}
+        {catalogErrors &&
+          <button onClick={() => setDisplay(<DisplayCatalogErrors setDisplay={setDisplay} catalogErrors={catalogErrors} setCatalogErrors={setCatalogErrors} />)}>Error Counts</button>
+        }
+
       </header>
       <main className="container">
-        <p>{display}</p>
+        <div>{display}</div>
       </main>
     </div>
   );
@@ -58,7 +66,7 @@ function DisplayCatalogErrors(props) {
   }
 
   // Add or remove the error type to/from object of error fixes on switch press
-  function handleCollapseSwitch(e) {
+  function handleErrorSwitch(e) {
     const updatedFixErrors = Object.assign({}, fixErrors);
     if (updatedFixErrors.hasOwnProperty(e.currentTarget.id)) {
       updatedFixErrors[e.currentTarget.id] = !updatedFixErrors[e.currentTarget.id];
@@ -96,7 +104,7 @@ function DisplayCatalogErrors(props) {
     brandError: "Get updated brand from Keepa.",
     manufacturerError: "Get updated manufacturer from Keepa.",
     tldError: "Fill in blank TLD fields using the catalog's TLD.",
-    retailerError: "Add Amazon add retailer."
+    retailerError: "Add Amazon as retailer."
   }
 
   const errorsArray = props.catalogErrors.slice();
@@ -121,13 +129,15 @@ function DisplayCatalogErrors(props) {
           <Collapse id={errorsArray[row].listKey + "Collapse"} in={open[errorsArray[row].listKey]}>
             <div>
               <ListGroup.Item>
-                <Form.Check
-                  type="switch"
-                  id="custom-switch"
-                  label="Check this switch"
-                  onClick={handleCollapseSwitch}
-                />
-                {errorMessages[errorsArray[row].listKey]}
+                <Form>
+                  <Form.Check
+                    type="switch"
+                    id={errorsArray[row].listKey + "Switch"}
+                    label={errorMessages[errorsArray[row].listKey]}
+                    onClick={handleErrorSwitch}
+                  />
+                </Form>
+
               </ListGroup.Item>
             </div>
           </Collapse>
@@ -136,11 +146,13 @@ function DisplayCatalogErrors(props) {
   }
 
   const listHTML =
-    <ListGroup>
-      {errorsArray}
-    </ListGroup>;
+    <React.Fragment>
+      <p onClick={handleErrorCorrectionSubmit}>Click to fix errors.</p>
+      <ListGroup>
+        {errorsArray}
+      </ListGroup>;
+    </React.Fragment>
 
-  // setOpen(trackOpenDropdowns)
   return listHTML;
 }
 
@@ -167,33 +179,7 @@ function LoadCSVFile(props) {
       .then(response => response.json())
       .then(data => {
         props.setStatus(data.status.success ? data.status.success : data.status.error)
-
-        fetch('/errorOverview')
-          .then(errorsResponse => errorsResponse.json())
-          .then(errorsResponseData => {
-
-            const formattedErrorNames = {
-              totalCount: "Total Count", dateError: "Date Error", trackItemError: "Track Item Error", retailerError: "Retailer Error", retailerItemIDError: "Retailer Item ID Error", tldError: "TLD Error", upcError: "UPC Error", titleError: "Title Error",
-              manufacturerError: "Manufacturer Error", brandError: "Brand Error", clientProductGroupError: "Client Product Group Error", categoryError: "Category Error", subCategoryError: "Subcategory Error", VATCodeError: "VAT Code Error"
-            }
-
-            const errorsArray = [];
-
-            for (let error in errorsResponseData) {
-              errorsArray.push({ listKey: error, label: formattedErrorNames[error], count: errorsResponseData[error], openCollapse: false });
-            }
-
-            errorsArray.sort((a, b) => b.count - a.count);
-
-            // Move totalCount to the zero index
-            const returnArray = errorsArray.filter(element => element.listKey !== "totalCount");
-            returnArray.unshift(errorsArray.find(element => element.listKey === "totalCount"));
-
-            props.setCatalogErrors(returnArray)
-
-            // return display to home
-            props.setDisplay("Finished")
-          });
+        generateErrorOverview(props.setCatalogErrors, props.setDisplay)
       });
   }
 
@@ -206,6 +192,46 @@ function LoadCSVFile(props) {
       </form>
     </div>
   );
+}
+
+// Gets an accounting of errors from backend and adds it formatted to state
+function generateErrorOverview(setCatalogErrors, setDisplay) {
+
+  setDisplay("Loading")
+
+  function addErrorsToState(errorsResponseData) {
+
+    return new Promise((resolve, reject) => {
+
+      const formattedErrorNames = {
+        totalCount: "Total Count", dateError: "Date Error", trackItemError: "Track Item Error", retailerError: "Retailer Error", retailerItemIDError: "Retailer Item ID Error", tldError: "TLD Error", upcError: "UPC Error", titleError: "Title Error",
+        manufacturerError: "Manufacturer Error", brandError: "Brand Error", clientProductGroupError: "Client Product Group Error", categoryError: "Category Error", subCategoryError: "Subcategory Error", VATCodeError: "VAT Code Error"
+      }
+
+      const errorsArray = [];
+
+      for (let error in errorsResponseData) {
+        errorsArray.push({ listKey: error, label: formattedErrorNames[error], count: errorsResponseData[error] });
+      }
+
+      errorsArray.sort((a, b) => b.count - a.count);
+
+      // Move totalCount to the zero index
+      const returnArray = errorsArray.filter(element => element.listKey !== "totalCount");
+      returnArray.unshift(errorsArray.find(element => element.listKey === "totalCount"));
+
+      setCatalogErrors(returnArray)
+
+      resolve(true);
+    });
+  }
+
+  fetch('/errorOverview')
+    .then(errorsResponse => errorsResponse.json())
+    .then(errorsResponseData => addErrorsToState(errorsResponseData))
+    .then(success => {
+      setDisplay("Finished")
+    });
 }
 
 export default App;
