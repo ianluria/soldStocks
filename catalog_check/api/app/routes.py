@@ -1,8 +1,9 @@
 from app import app, db
 from app.models import Catalog
-from app.errorCheck import checkRowForErrors
+from app.errorCheck import checkRowForErrors, fixErrorsInRow
 from flask import request
 import re
+import json
 
 from datetime import datetime, timedelta, date
 from sqlalchemy import or_
@@ -90,7 +91,7 @@ def loadCSV():
                 db.session.add(saveRow)
 
         db.session.commit()
-        
+
         return {"status": {"success": f"{request.files['file'].filename} successfully loaded."}}
 
 
@@ -113,6 +114,9 @@ def errorOverview():
 
 @app.route('/errorFix', methods=['POST'])
 def errorFix():
+
+    print(request.json)
+
     # Compile reg exes first
     dateFormat1 = re.compile("[-/]")
     dateFormat2 = re.compile(
@@ -121,61 +125,26 @@ def errorFix():
     dateFormat4 = re.compile("^\d+$")
     goodCharacters = re.compile("\w+")
 
+    rowErrorFixParameters = {"dateFormat1": dateFormat1, "dateFormat2": dateFormat2,
+                             "dateFormat3": dateFormat3, "dateFormat4": dateFormat4, "goodCharacters": goodCharacters, "thisTLD": "error"}
+
     errorFixCount = 0
 
-    for row in Catalog.query.all():
+    allRows = Catalog.query.all()
+
+    for row in allRows:
+        errorPresentInRow = false
         for key, value in row:
             if "Error" in key and value:
+                errorPresentInRow = true
+                continue  # test this!
 
-                # Fix date error
-                if row.dateError:
-                    # Test if date string has '-' or '/'
-                    if dateFormat1.search(row.date):
-                        # MM-DD-YY or MM-DD-YYYY
-                        if dateFormat2.match(row.date):
-                            thisDate = date(
-                                row.date[6:], row.date[0:2], row.date[3:5])
-                        # YYYY-MM-DD
-                        elif dateFormat3.match(row.date):
-                            thisDate = date(
-                                row.date[0:4], row.date[5:7], row.date[8:10])
-
-                    # Test if MS serialized date format
-                    elif dateFormat4.match(row.date):
-
-                        thisDate = from_excel_ordinal(row.date)
-
-                        # From: https://stackoverflow.com/questions/29387137/how-to-convert-a-given-ordinal-number-from-excel-to-a-date
-                        def from_excel_ordinal(ordinal, _epoch0=datetime(1899, 12, 31)):
-                            if ordinal >= 60:
-                                ordinal -= 1  # Excel leap year bug, 1900 is not a leap year!
-                            return (_epoch0 + timedelta(days=ordinal)).replace(microsecond=0)
-
-                    row.date = thisDate.__str__()
-                    errorFixCount += 1
-
-                characterErrors = ['titleError',
-                                   'manufacturerError', 'brandError']
-                for error in characterErrors:
-                    if row[error]:
-                        if goodCharacters.search(row[error]):
-                            listOfGoodCharacters = goodCharacters.findall(
-                                row[error])
-                            row[error] = " ".join(listOfGoodCharacters)
-                            errorFixCount += 1
-
-                # Fix retailer error
-                if row.retailer.lower() != 'amazon':
-                    row.retailer = 'Amazon'
-                    errorFixCount += 1
-
-                # Fix TLD error
-                if row.tld != thisTLD:
-                    row.retailer = thisTLD
-                    errorFixCount += 1
-
-            db.session.add(row)
-            continue  # test this!
+        if errorPresentInRow:
+            rowErrorFixParameters["row"] = row
+            fixedRow = fixErrorsInRow(rowErrorFixParameters)
+            # error fix
+            db.session.add(fixedRow["row"])
+            errorFixCount += fixedRow["errorFixCount"]
 
     db.session.commit()
-    return  {"status": {"success": f"Repaired {errorFixCount} number of errors."}}
+    return {"status": {"success": f"Repaired {errorFixCount} number of errors."}}

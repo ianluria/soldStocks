@@ -16,20 +16,21 @@ function App() {
   const [display, setDisplay] = useState();
   const [status, setStatus] = useState();
   const [catalogErrors, setCatalogErrors] = useState();
+  const [thisTLD, setThisTLD] = useState();
 
   // Check if there is a catalog loaded in database
   // If there is, load error status into state
   useEffect(() => {
-  fetch('/checkForLoadedCatalog')
-    .then(response => response.json())
-    .then(data => {
-      if (data) {
-        generateErrorOverview(setCatalogErrors, setDisplay)
-      } else {
-        setStatus("Load a catalog to get started.")
-      }
-    });
-  },[]);
+    fetch('/checkForLoadedCatalog')
+      .then(response => response.json())
+      .then(data => {
+        if (data) {
+          generateErrorOverview(setCatalogErrors, setDisplay)
+        } else {
+          setStatus("Load a catalog to get started.")
+        }
+      });
+  }, []);
 
   return (
     <div className="App">
@@ -79,9 +80,7 @@ function DisplayCatalogErrors(props) {
 
   // Send list of errors to fix to backend
   function handleErrorCorrectionSubmit(e) {
-
-    if (fixErrors) {
-
+    if (Object.keys(fixErrors).length !== 0) {
       const requestOptions = {
         method: 'POST',
         headers: {
@@ -96,6 +95,7 @@ function DisplayCatalogErrors(props) {
 
         });
     }
+    // else add error status message for empty fixErrors
   }
 
   const errorMessages = {
