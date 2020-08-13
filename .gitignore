@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 #User files
-/catalog_check/api/test.py
+/catalog_check/api/app/test.py
