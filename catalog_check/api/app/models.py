@@ -29,6 +29,7 @@ class Catalog(db.Model):
     subCategoryError = db.Column(db.Boolean())
     VATCode = db.Column(db.String(2000))
     VATCodeError = db.Column(db.Boolean())
+    repaired = db.Column(db.Boolean())
 
     def __repr__(self):
         return f'<Product ASIN {self.retailerItemID}>'

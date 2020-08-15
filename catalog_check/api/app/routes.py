@@ -1,6 +1,6 @@
 from app import app, db
 from app.models import Catalog
-from app.errorCheck import checkRowForErrors, fixErrorsInRow
+from app import errorCheck
 from flask import request
 import re
 import json
@@ -85,7 +85,7 @@ def loadCSV():
                 saveRow.VATCode = row[14].strip()
 
                 # Run error checking on row
-                if not checkRowForErrors(saveRow):
+                if not errorCheck.checkRowForErrors(saveRow):
                     return {"status": {"error": "saveRow must be a Categories object."}}
 
                 db.session.add(saveRow)
@@ -116,35 +116,37 @@ def errorOverview():
 def errorFix():
 
     print(request.json)
-
-    # Compile reg exes first
-    dateFormat1 = re.compile("[-/]")
-    dateFormat2 = re.compile(
-        "^\d{2}[-/]\d{2}[-/]\d{2}$|^\d{2}[-/]\d{2}[-/]\d{4}$")
-    dateFormat3 = re.compile("^\d{4}[-/]\d{2}[-/]\d{2}$")
-    dateFormat4 = re.compile("^\d+$")
-    goodCharacters = re.compile("\w+")
-
-    rowErrorFixParameters = {"dateFormat1": dateFormat1, "dateFormat2": dateFormat2,
-                             "dateFormat3": dateFormat3, "dateFormat4": dateFormat4, "goodCharacters": goodCharacters, "thisTLD": "error"}
-
     errorFixCount = 0
 
-    allRows = Catalog.query.all()
+    if ("titleError",True) in request.json or ("manufacturerError", True) in request.json or ("brandError", True) in request.json:
 
-    for row in allRows:
-        errorPresentInRow = false
-        for key, value in row:
-            if "Error" in key and value:
-                errorPresentInRow = true
-                continue  # test this!
+       #t = [Catalog.titleError.__eq__(True), Catalog.manufacturerError.__eq__(True), Catalog.brandError.__eq__(True)] 
+       #titleManBrandErrors = Catalog.query.filter(or_(*t)).all()
 
-        if errorPresentInRow:
-            rowErrorFixParameters["row"] = row
-            fixedRow = fixErrorsInRow(rowErrorFixParameters)
-            # error fix
-            db.session.add(fixedRow["row"])
-            errorFixCount += fixedRow["errorFixCount"]
+    t = [getattr(Catalog,error[0]).__eq__(True) for error in request.json.items() if error[0] in ["titleError","manufacturerError","brandError"] and error[1]]
+
+
+
+    # First get all rows that have a title, man, or brand error
+  
+
+
+        titleManBrandErrors = Catalog.query.filter(or_(
+            Catalog.titleError == True, Catalog.manufacturerError == True, Catalog.brandError == True)).all()
+
+    errorFixCount += errorCheck.fixCharacterErrors(titleManBrandErrors)
+
+    allOtherErrors = Catalog.query.filter(or_(
+        Catalog.dateError == True, Catalog.retailerError == True, Catalog.tldError == True, Catalog.upcError == True)).all()
+
+    # get all remaining error rows, repair
+
+    errorFixCount += fixedRow["errorFixCount"]
 
     db.session.commit()
     return {"status": {"success": f"Repaired {errorFixCount} number of errors."}}
+
+
+
+
+#titleManBrandErrors = Catalog.query.filter(or_(Catalog.titleError == True, Catalog.manufacturerError == True, Catalog.brandError == True)).count()
