@@ -51,8 +51,12 @@ function App() {
 
 function DisplayCatalogErrors(props) {
 
+  // Used to track which collapse list items should be open
   const [open, setOpen] = useState({});
+  // Used to track which error types the user wants fixed
   const [fixErrors, setFixErrors] = useState({});
+
+  // combine handleListItemClick into one handler
 
   // Expand collapse list item when 'parent' list item is clicked
   function handleListItemClick(e) {
@@ -82,31 +86,39 @@ function DisplayCatalogErrors(props) {
   function handleErrorCorrectionSubmit(e) {
     if (Object.keys(fixErrors).length !== 0) {
 
-      // Array of the listKeys of all errors the user wants fixed.
-      const errorsToFix = Object.entries(fixErrors).filter(error=>error[1]==true).map(trueError => trueError[0]);
+      // Array of the listKey names of all errors the user wants fixed.
+      const errorsToFix = Object.entries(fixErrors).filter(error => error[1] == true).map(trueError => trueError[0]);
+
+
+      const requestOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(errorsToFix)
+      };
 
       // Check if there are any errors that need to be fixed with Keepa
       const keepaErrors = ["titleError", "brandError", "manufacturerError"];
 
-      if (errorsToFix.some(error => keepaErrors.includes(error))){
+      if (errorsToFix.some(error => keepaErrors.includes(error))) {
 
-        
+        fetch('/keepaErrorFix', requestOptions)
+          .then(response => response.json())
+          .then(data => {
+
+          });
       }
 
+      const generalErrors = ["dateError", "retailerError", "tldError", "upcError"];
 
-        const requestOptions = {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(fixErrors)
-        };
+      if (errorsToFix.some(error => generalErrors.includes(error))) {
+        fetch('/generalErrorFix', requestOptions)
+          .then(response => response.json())
+          .then(data => {
 
-      fetch('/errorFix', requestOptions)
-        .then(response => response.json())
-        .then(data => {
-
-        });
+          });
+      }
     }
     // else add error status message for empty fixErrors
   }
@@ -121,6 +133,7 @@ function DisplayCatalogErrors(props) {
     upcError: "Truncate any characters above 255.",
   }
 
+  // Copy the catalogErrors array  
   const errorsArray = props.catalogErrors.slice();
 
   for (let row in errorsArray) {
@@ -139,18 +152,23 @@ function DisplayCatalogErrors(props) {
             {errorsArray[row].label} : {errorsArray[row].count}
             <FontAwesomeIcon icon={faAngleDown} className="rotateIcon" />
           </ListGroup.Item>
+
           <Collapse id={errorsArray[row].listKey + "Collapse"} in={open[errorsArray[row].listKey]}>
             {/* Div added to smooth collapse transition */}
             <div>
               <ListGroup.Item>
-                <Form>
-                  <Form.Check
-                    type="switch"
-                    id={errorsArray[row].listKey + "Switch"}
-                    label={errorMessages[errorsArray[row].listKey]}
-                    onClick={handleErrorSwitch}
-                  />
-                </Form>
+                {/* Only display error correction switch if there were errors found */}
+                {errorsArray[row].count > 0 &&
+                  <Form>
+                    <Form.Check
+                      type="switch"
+                      id={errorsArray[row].listKey + "Switch"}
+                      label={errorMessages[errorsArray[row].listKey]}
+                      onClick={handleErrorSwitch}
+                    />
+                  </Form>}
+                {errorsArray[row].count === 0 &&
+                  <p>No errors found.</p>}                  }
               </ListGroup.Item>
             </div>
           </Collapse>
