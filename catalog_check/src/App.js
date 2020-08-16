@@ -66,7 +66,7 @@ function DisplayCatalogErrors(props) {
     return;
   }
 
-  // Add or remove the error type to/from object of error fixes on switch press
+  // Add or remove an error type to/from fixErrors on switch press
   function handleErrorSwitch(e) {
     const updatedFixErrors = Object.assign({}, fixErrors);
     if (updatedFixErrors.hasOwnProperty(e.currentTarget.id)) {
@@ -81,13 +81,26 @@ function DisplayCatalogErrors(props) {
   // Send list of errors to fix to backend
   function handleErrorCorrectionSubmit(e) {
     if (Object.keys(fixErrors).length !== 0) {
-      const requestOptions = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(fixErrors)
-      };
+
+      // Array of the listKeys of all errors the user wants fixed.
+      const errorsToFix = Object.entries(fixErrors).filter(error=>error[1]==true).map(trueError => trueError[0]);
+
+      // Check if there are any errors that need to be fixed with Keepa
+      const keepaErrors = ["titleError", "brandError", "manufacturerError"];
+
+      if (errorsToFix.some(error => keepaErrors.includes(error))){
+
+        
+      }
+
+
+        const requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(fixErrors)
+        };
 
       fetch('/errorFix', requestOptions)
         .then(response => response.json())
@@ -104,11 +117,11 @@ function DisplayCatalogErrors(props) {
     brandError: "Get updated brand from Keepa.",
     manufacturerError: "Get updated manufacturer from Keepa.",
     tldError: "Fill in blank TLD fields using the catalog's TLD.",
-    retailerError: "Add Amazon as retailer."
+    retailerError: "Add Amazon as retailer.",
+    upcError: "Truncate any characters above 255.",
   }
 
   const errorsArray = props.catalogErrors.slice();
-
 
   for (let row in errorsArray) {
     // Total count does not need a drop down list item.
@@ -127,6 +140,7 @@ function DisplayCatalogErrors(props) {
             <FontAwesomeIcon icon={faAngleDown} className="rotateIcon" />
           </ListGroup.Item>
           <Collapse id={errorsArray[row].listKey + "Collapse"} in={open[errorsArray[row].listKey]}>
+            {/* Div added to smooth collapse transition */}
             <div>
               <ListGroup.Item>
                 <Form>
@@ -137,7 +151,6 @@ function DisplayCatalogErrors(props) {
                     onClick={handleErrorSwitch}
                   />
                 </Form>
-
               </ListGroup.Item>
             </div>
           </Collapse>

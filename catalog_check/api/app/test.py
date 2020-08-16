@@ -1,13 +1,10 @@
+keepaCheckErrors = [("titleError", True),
+                    ("manufacturerError", True), ("brandError", True)]
 
-rowErrorFixParameters = {"dateFormat1": 1, "dateFormat2": 2,
-                             "dateFormat3": 3, "dateFormat4": 4, "goodCharacters": 123}
+requestJSON = {"titleError": True, "manufacturerError": False,
+               "brandError": True, "upcError": False, }
 
-def test(dict):
-    
-    
-    print(dict["dateFormat3"])
+t = [item for item in requestJSON.items() if item[1]
+     and item not in keepaCheckErrors]
 
-test(rowErrorFixParameters)
-
-
-
+print(not t)

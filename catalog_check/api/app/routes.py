@@ -111,42 +111,49 @@ def errorOverview():
     # return JSON of error type with count test
     return errorTypes
 
+@app.route('/keepaErrorFix', methods=['POST'])
+def keepaErrorFix():
+        errorFixCount = 0
 
-@app.route('/errorFix', methods=['POST'])
-def errorFix():
+    # keepaCheckErrors = ["titleError","manufacturerError", "brandError"]
+
+    
+    #    #t = [Catalog.titleError.__eq__(True), Catalog.manufacturerError.__eq__(True), Catalog.brandError.__eq__(True)]
+
+    #     errorColumns = [getattr(Catalog, error[0]).__eq__(True) for error in request.json.items(
+    #     ) if error[0] in ["titleError", "manufacturerError", "brandError"] and error[1]]
+
+    #     titleManBrandErrors = Catalog.query.filter(or_(*errorColumns)).all()
+
+    #     if titleManBrandErrors:
+    #         errorFixCount += errorCheck.fixCharacterErrors(titleManBrandErrors)
+
+
+
+
+
+@app.route('/generalErrorFix', methods=['POST'])
+def generalErrorFix():
 
     print(request.json)
     errorFixCount = 0
 
-    if ("titleError",True) in request.json or ("manufacturerError", True) in request.json or ("brandError", True) in request.json:
-
-       #t = [Catalog.titleError.__eq__(True), Catalog.manufacturerError.__eq__(True), Catalog.brandError.__eq__(True)] 
-       #titleManBrandErrors = Catalog.query.filter(or_(*t)).all()
-
-    t = [getattr(Catalog,error[0]).__eq__(True) for error in request.json.items() if error[0] in ["titleError","manufacturerError","brandError"] and error[1]]
+    generalErrors = ["dateError", "retailerError", "tldError", "upcError"]
 
 
+    # Fix all other non-Keepa errors
+    if [item for item in request.json.items() if item[1] and item[0] in generalErrors]:
 
-    # First get all rows that have a title, man, or brand error
-  
+        errorColumns = [getattr(Catalog, error[0]).__eq__(True) for error in request.json.items()
+                        if error[0] in generalErrors and error[1]]
 
+        allOtherErrors = Catalog.query.filter(or_(*errorColumns)).all()
 
-        titleManBrandErrors = Catalog.query.filter(or_(
-            Catalog.titleError == True, Catalog.manufacturerError == True, Catalog.brandError == True)).all()
-
-    errorFixCount += errorCheck.fixCharacterErrors(titleManBrandErrors)
-
-    allOtherErrors = Catalog.query.filter(or_(
-        Catalog.dateError == True, Catalog.retailerError == True, Catalog.tldError == True, Catalog.upcError == True)).all()
-
-    # get all remaining error rows, repair
-
-    errorFixCount += fixedRow["errorFixCount"]
+        if allOtherErrors:
+            errorFixCount += errorCheck.fixGeneralErrorsInRow(allOtherErrors)
 
     db.session.commit()
     return {"status": {"success": f"Repaired {errorFixCount} number of errors."}}
-
-
 
 
 #titleManBrandErrors = Catalog.query.filter(or_(Catalog.titleError == True, Catalog.manufacturerError == True, Catalog.brandError == True)).count()

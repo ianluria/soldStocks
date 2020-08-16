@@ -104,6 +104,6 @@ def fixGeneralErrorsInRow(listOfCatalogRows):
             row.upc = row.upc[0:256]
             errorFixCount += 1
 
-        db.session.add(fixedRow["row"])
+        db.session.add(row)
 
     return errorFixCount
