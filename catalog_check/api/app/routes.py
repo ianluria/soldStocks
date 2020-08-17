@@ -1,5 +1,5 @@
 from app import app, db
-from app.models import Catalog
+from app.models import Catalog, DataAboutCatalog
 from app import errorCheck
 from flask import request
 import re
@@ -32,6 +32,9 @@ def checkForLoadedCatalog():
 @app.route('/loadCSV', methods=['PUT'])
 def loadCSV():
 
+    print("load csv request", request.form)
+    return 0
+
     def allowed_file(filename):
         return '.' in filename and \
             filename.rsplit('.', 1)[1].lower() in {'csv'}
@@ -50,13 +53,19 @@ def loadCSV():
     if 'file' not in request.files or request.files['file'].filename == '' or not allowed_file(request.files['file'].filename):
         return {"status": {"error": "Must include a CSV file."}}
 
-    # check to make sure file is csv
     # any way to prevent attacks from loading file?
     if request.files['file']:
 
+
         # Delete all existing data in table
         Catalog.query.delete()
+        DataAboutCatalog.delete()
         db.session.commit()
+
+        # Get TLD from user
+        thisCatalog = DataAboutCatalog()
+        #  thisCatalog.thisTLD = request.
+
 
         for index, row in enumerate(request.files['file']):
             # Create a list with row's data
@@ -90,6 +99,11 @@ def loadCSV():
 
                 db.session.add(saveRow)
 
+        # Add file name to database
+       
+        thisCatalog.thisFileName = request.files['file'].filename
+        db.session.add(thisCatalog)
+
         db.session.commit()
 
         return {"status": {"success": f"{request.files['file'].filename} successfully loaded."}}
@@ -111,13 +125,13 @@ def errorOverview():
     # return JSON of error type with count test
     return errorTypes
 
+
 @app.route('/keepaErrorFix', methods=['POST'])
 def keepaErrorFix():
-        errorFixCount = 0
+    errorFixCount = 0
 
     # keepaCheckErrors = ["titleError","manufacturerError", "brandError"]
 
-    
     #    #t = [Catalog.titleError.__eq__(True), Catalog.manufacturerError.__eq__(True), Catalog.brandError.__eq__(True)]
 
     #     errorColumns = [getattr(Catalog, error[0]).__eq__(True) for error in request.json.items(
@@ -127,9 +141,7 @@ def keepaErrorFix():
 
     #     if titleManBrandErrors:
     #         errorFixCount += errorCheck.fixCharacterErrors(titleManBrandErrors)
-
-
-
+    return 0
 
 
 @app.route('/generalErrorFix', methods=['POST'])
@@ -139,7 +151,6 @@ def generalErrorFix():
     errorFixCount = 0
 
     generalErrors = ["dateError", "retailerError", "tldError", "upcError"]
-
 
     # Fix all other non-Keepa errors
     if [item for item in request.json.items() if item[1] and item[0] in generalErrors]:

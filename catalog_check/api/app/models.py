@@ -1,19 +1,27 @@
 from app import db
 
 
+class DataAboutCatalog(db.Model):
+    thisTLD = db.Column(db.String(5), unique=True)
+    thisFileName = db.Column(db.String(1000), primary_key=True)
+
+    def __repr__(self):
+        return f'<Catalog file: {self.thisFileName}>'
+
+
 class Catalog(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     date = db.Column(db.String(100))
     dateError = db.Column(db.Boolean())
-    trackItem = db.Column(db.String(2000))
+    trackItem = db.Column(db.String(1000))
     trackItemError = db.Column(db.Boolean())
-    retailer = db.Column(db.String(2000))
+    retailer = db.Column(db.String(500))
     retailerError = db.Column(db.Boolean())
     retailerItemID = db.Column(db.String(1000), index=True, unique=True)
     retailerItemIDError = db.Column(db.Boolean())
-    tld = db.Column(db.String(2000))
+    tld = db.Column(db.String(500))
     tldError = db.Column(db.Boolean())
-    upc = db.Column(db.String(2000))
+    upc = db.Column(db.String(1000))
     upcError = db.Column(db.Boolean())
     title = db.Column(db.String(5000))
     titleError = db.Column(db.Boolean())
@@ -29,7 +37,6 @@ class Catalog(db.Model):
     subCategoryError = db.Column(db.Boolean())
     VATCode = db.Column(db.String(2000))
     VATCodeError = db.Column(db.Boolean())
-    repaired = db.Column(db.Boolean())
 
     def __repr__(self):
         return f'<Product ASIN {self.retailerItemID}>'

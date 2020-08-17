@@ -5,6 +5,11 @@ import { faAngleDown } from '@fortawesome/free-solid-svg-icons'
 import ListGroup from 'react-bootstrap/ListGroup';
 import Collapse from 'react-bootstrap/Collapse';
 import Form from 'react-bootstrap/Form';
+import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Button from 'react-bootstrap/Button'
+import Col from 'react-bootstrap/Col'
+import Navbar from 'react-bootstrap/Navbar'
 
 // import './App.css';
 
@@ -33,19 +38,36 @@ function App() {
   }, []);
 
   return (
-    <div className="App">
-      <header className="App-header">
-        {status}
-        <button onClick={() => setDisplay(<LoadCSVFile setCatalogErrors={setCatalogErrors} setDisplay={setDisplay} setStatus={setStatus} />)}>Load CSV File</button>
-        {catalogErrors &&
-          <button onClick={() => setDisplay(<DisplayCatalogErrors setDisplay={setDisplay} catalogErrors={catalogErrors} setCatalogErrors={setCatalogErrors} />)}>Error Counts</button>
-        }
-
+    <Container className="py-3">
+      {/* <React.Fragment key="bodyFragment"> */}
+      <header>
+        <Container className="py-3">
+          <Row>{status}</Row>
+          <Row className="justify-content-around"><Button variant="outline-dark" onClick={() => setDisplay(<LoadCSVFile setCatalogErrors={setCatalogErrors} setDisplay={setDisplay} setStatus={setStatus} thisTLD={thisTLD} setThisTLD={setThisTLD} />)}>Load CSV File</Button>
+            {catalogErrors &&
+              <Button variant="outline-dark" onClick={() => setDisplay(<DisplayCatalogErrors setDisplay={setDisplay} catalogErrors={catalogErrors} setCatalogErrors={setCatalogErrors} />)}>Error Counts</Button>
+            }</Row>
+        </Container>
       </header>
-      <main className="container">
-        <div>{display}</div>
+      <main>
+        <Container className="py-3">
+          <Row>
+            <Col>
+              {display}
+            </Col>
+          </Row>
+        </Container>
       </main>
-    </div>
+      {/* </React.Fragment> */}
+      <Navbar fixed="bottom" bg="dark" variant="dark">
+        <Container>
+          <Row>
+            <p className="text-light my-2 mx-3">TLD: </p>
+            <p className="text-light my-2 mx-3">CSV loaded: </p>
+          </Row>
+        </Container>
+      </Navbar>
+    </Container>
   );
 }
 
@@ -87,7 +109,7 @@ function DisplayCatalogErrors(props) {
     if (Object.keys(fixErrors).length !== 0) {
 
       // Array of the listKey names of all errors the user wants fixed.
-      const errorsToFix = Object.entries(fixErrors).filter(error => error[1] == true).map(trueError => trueError[0]);
+      const errorsToFix = Object.entries(fixErrors).filter(error => error[1] === true).map(trueError => trueError[0]);
 
 
       const requestOptions = {
@@ -168,7 +190,8 @@ function DisplayCatalogErrors(props) {
                     />
                   </Form>}
                 {errorsArray[row].count === 0 &&
-                  <p>No errors found.</p>}                  }
+                  <p>No errors found.</p>
+                }
               </ListGroup.Item>
             </div>
           </Collapse>
@@ -214,14 +237,44 @@ function LoadCSVFile(props) {
       });
   }
 
+  function selectChange(event) {
+
+    const t = event.target.value;
+    return;
+
+  }
+
   return (
-    <div>
-      <form onSubmit={handleSetupFormSubmit}>
-        <label htmlFor="userfile">Upload file:</label>
-        <input type="file" name="userfile" ref={fileInput} />
-        <input type="submit" value="Submit" />
-      </form>
-    </div>
+    <Form onSubmit={handleSetupFormSubmit}>
+      <Row className="justify-content-center">
+        <Col sm={3}>
+          <Form.Group controlId="formGroupFile">
+            <Form.File
+              id="usersCSVFile"
+              label="Upload CSV File"
+              ref={fileInput}
+              custom
+            />
+          </Form.Group>
+        </Col>
+        <Col sm={4}>
+          <Form.Group controlId="formGroupSelect">
+            <Form.Label>Select Catalog TLD</Form.Label>
+            <Form.Control as="select" htmlSize={2} onChange={selectChange} custom>
+              <option>US</option>
+              <option>CA</option>
+              <option>UK</option>
+              <option>FR</option>
+              <option>ES</option>
+              <option>DE</option>
+            </Form.Control>
+          </Form.Group>
+        </Col>
+        <Col sm={1}>
+          <Button variant="outline-primary" type="submit">Submit</Button>
+        </Col>
+      </Row>
+    </Form>
   );
 }
 
