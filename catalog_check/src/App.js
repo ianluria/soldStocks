@@ -213,6 +213,7 @@ function DisplayCatalogErrors(props) {
 
 
 function LoadCSVFile(props) {
+  // const [thisTLD, setThisTLD] = useState();
   const fileInput = React.createRef();
 
   function handleSetupFormSubmit(e) {
@@ -224,6 +225,7 @@ function LoadCSVFile(props) {
 
     const formData = new FormData();
     formData.append("file", fileInput.current.files[0]);
+    formData.append("tld", props.thisTLD);
 
     const requestOptions = {
       method: 'PUT',
@@ -239,10 +241,8 @@ function LoadCSVFile(props) {
   }
 
   function selectChange(event) {
-
-    const t = event.target.value;
+    props.setThisTLD(event.target.value)
     return;
-
   }
 
   return (

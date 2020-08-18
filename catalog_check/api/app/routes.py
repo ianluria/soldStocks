@@ -32,8 +32,8 @@ def checkForLoadedCatalog():
 @app.route('/loadCSV', methods=['PUT'])
 def loadCSV():
 
-    print("load csv request", request.form)
-    return 0
+    
+    
 
     def allowed_file(filename):
         return '.' in filename and \
@@ -62,9 +62,10 @@ def loadCSV():
         DataAboutCatalog.delete()
         db.session.commit()
 
-        # Get TLD from user
+        # Add TLD from user
         thisCatalog = DataAboutCatalog()
-        #  thisCatalog.thisTLD = request.
+        thisCatalog.thisTLD = request.form.tld
+        print("thisCatalog.thisTLD: ", thisCatalog.thisTLD)
 
 
         for index, row in enumerate(request.files['file']):
