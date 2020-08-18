@@ -38,40 +38,37 @@ function App() {
   }, []);
 
   return (
-
-    <Container>
-      <Container>
-        <Navbar fixed="top" bg="dark" variant="dark">
-          <Navbar.Brand href="#home">Catalog Checker</Navbar.Brand>
-          <Container>
-            <Row>
-              <p className="text-light my-2 mx-3">TLD: </p>
-              <p className="text-light my-2 mx-3">CSV loaded: </p>
-            </Row>
-          </Container>
-        </Navbar>
-      </Container>
-      <Container className="my-3">
-        <Container className="py-3">
+    <Container fluid>
+      <Row className="my-3" >
+        <Container fluid>
+          <Navbar bg="dark" variant="dark" fluid>
+            <Navbar.Brand href="#home">Catalog Checker</Navbar.Brand>
+            <Container>
+              <Row>
+                <p className="text-light my-2 mx-3">TLD: </p>
+                <p className="text-light my-2 mx-3">CSV loaded: </p>
+              </Row>
+            </Container>
+          </Navbar>
+        </Container>
+      </Row>
+      <Row className="my-3">
+        <Container fluid>
           <Row>{status}</Row>
           <Row className="justify-content-around"><Button variant="outline-dark" onClick={() => setDisplay(<LoadCSVFile setCatalogErrors={setCatalogErrors} setDisplay={setDisplay} setStatus={setStatus} thisTLD={thisTLD} setThisTLD={setThisTLD} />)}>Load CSV File</Button>
             {catalogErrors &&
               <Button variant="outline-dark" onClick={() => setDisplay(<DisplayCatalogErrors setDisplay={setDisplay} catalogErrors={catalogErrors} setCatalogErrors={setCatalogErrors} />)}>Error Counts</Button>
             }</Row>
         </Container>
-        <main>
-          <Container className="py-3">
-            <Row>
-              <Col>
-                {display}
-              </Col>
-            </Row>
-          </Container>
-        </main>
-      </Container>
+      </Row>
+      <Row className="my-3">
+        <Container fluid>
+
+          {display}
+
+        </Container>
+      </Row>
     </Container>
-
-
   );
 }
 
@@ -249,36 +246,40 @@ function LoadCSVFile(props) {
   }
 
   return (
-    <Form onSubmit={handleSetupFormSubmit}>
-      <Row className="justify-content-center">
-        <Col sm={3}>
-          <Form.Group controlId="formGroupFile">
-            <Form.File
-              id="usersCSVFile"
-              label="Upload CSV File"
-              ref={fileInput}
-              custom
-            />
-          </Form.Group>
-        </Col>
-        <Col sm={4}>
-          <Form.Group controlId="formGroupSelect">
-            <Form.Label>Select Catalog TLD</Form.Label>
-            <Form.Control as="select" htmlSize={2} onChange={selectChange} custom>
-              <option>US</option>
-              <option>CA</option>
-              <option>UK</option>
-              <option>FR</option>
-              <option>ES</option>
-              <option>DE</option>
-            </Form.Control>
-          </Form.Group>
-        </Col>
-        <Col sm={1}>
-          <Button variant="outline-primary" type="submit">Submit</Button>
-        </Col>
-      </Row>
-    </Form>
+    <Row className="my-3">
+      <Container as="form" onSubmit={handleSetupFormSubmit}>
+        <Row className="justify-content-center">
+          <Col sm={4} >
+            <Form.Group controlId="formGroupFile">
+              <Form.File
+                id="usersCSVFile"
+                label="Upload CSV File"
+                ref={fileInput}
+                custom
+              />
+            </Form.Group>
+          </Col>
+          <Col sm={3} >
+            <Form.Group controlId="formGroupSelect">
+              <Form.Label>Select Catalog TLD</Form.Label>
+              <Form.Control as="select" htmlSize={2} onChange={selectChange} custom>
+                <option>US</option>
+                <option>CA</option>
+                <option>UK</option>
+                <option>FR</option>
+                <option>ES</option>
+                <option>DE</option>
+              </Form.Control>
+            </Form.Group>
+          </Col>
+        </Row>
+        <Row className="justify-content-center my-3">
+          <Col sm={"auto"}>
+            <Button variant="outline-primary" type="submit">Load CSV</Button>
+          </Col>
+        </Row>
+      </Container>
+    </Row>
   );
 }
 
