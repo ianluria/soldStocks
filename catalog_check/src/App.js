@@ -11,11 +11,6 @@ import Button from 'react-bootstrap/Button'
 import Col from 'react-bootstrap/Col'
 import Navbar from 'react-bootstrap/Navbar'
 
-// import './App.css';
-
-// when app is starting, check if db is already holding a catalog
-// style page
-
 function App() {
 
   const [display, setDisplay] = useState();
@@ -39,14 +34,18 @@ function App() {
 
   return (
     <Container fluid>
-      <Row className="my-3" >
+      <Row className="my-3">
         <Container fluid>
           <Navbar bg="dark" variant="dark" fluid>
             <Navbar.Brand href="#home">Catalog Checker</Navbar.Brand>
             <Container>
-              <Row>
-                <p className="text-light my-2 mx-3">TLD: </p>
-                <p className="text-light my-2 mx-3">CSV loaded: </p>
+              <Row className="w-100">
+                <Col sm={1}>
+                  <p className="text-light my-2 mx-3">TLD:&nbsp;&nbsp;<span className="text-monospace">{thisTLD}</span></p>
+                </Col>
+                <Col sm={"auto"}>
+                  <p className="text-light my-2 mx-3">CSV loaded: </p>
+                </Col>
               </Row>
             </Container>
           </Navbar>
@@ -63,9 +62,7 @@ function App() {
       </Row>
       <Row className="my-3">
         <Container fluid>
-
           {display}
-
         </Container>
       </Row>
     </Container>
@@ -111,7 +108,6 @@ function DisplayCatalogErrors(props) {
 
       // Array of the listKey names of all errors the user wants fixed.
       const errorsToFix = Object.entries(fixErrors).filter(error => error[1] === true).map(trueError => trueError[0]);
-
 
       const requestOptions = {
         method: 'POST',
@@ -210,7 +206,6 @@ function DisplayCatalogErrors(props) {
 
   return listHTML;
 }
-
 
 function LoadCSVFile(props) {
   // const [thisTLD, setThisTLD] = useState();
