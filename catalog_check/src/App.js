@@ -38,9 +38,20 @@ function App() {
   }, []);
 
   return (
-    <Container className="py-3">
-      {/* <React.Fragment key="bodyFragment"> */}
-      <header>
+
+    <Container>
+      <Container>
+        <Navbar fixed="top" bg="dark" variant="dark">
+          <Navbar.Brand href="#home">Catalog Checker</Navbar.Brand>
+          <Container>
+            <Row>
+              <p className="text-light my-2 mx-3">TLD: </p>
+              <p className="text-light my-2 mx-3">CSV loaded: </p>
+            </Row>
+          </Container>
+        </Navbar>
+      </Container>
+      <Container className="my-3">
         <Container className="py-3">
           <Row>{status}</Row>
           <Row className="justify-content-around"><Button variant="outline-dark" onClick={() => setDisplay(<LoadCSVFile setCatalogErrors={setCatalogErrors} setDisplay={setDisplay} setStatus={setStatus} thisTLD={thisTLD} setThisTLD={setThisTLD} />)}>Load CSV File</Button>
@@ -48,26 +59,19 @@ function App() {
               <Button variant="outline-dark" onClick={() => setDisplay(<DisplayCatalogErrors setDisplay={setDisplay} catalogErrors={catalogErrors} setCatalogErrors={setCatalogErrors} />)}>Error Counts</Button>
             }</Row>
         </Container>
-      </header>
-      <main>
-        <Container className="py-3">
-          <Row>
-            <Col>
-              {display}
-            </Col>
-          </Row>
-        </Container>
-      </main>
-      {/* </React.Fragment> */}
-      <Navbar fixed="bottom" bg="dark" variant="dark">
-        <Container>
-          <Row>
-            <p className="text-light my-2 mx-3">TLD: </p>
-            <p className="text-light my-2 mx-3">CSV loaded: </p>
-          </Row>
-        </Container>
-      </Navbar>
+        <main>
+          <Container className="py-3">
+            <Row>
+              <Col>
+                {display}
+              </Col>
+            </Row>
+          </Container>
+        </main>
+      </Container>
     </Container>
+
+
   );
 }
 
