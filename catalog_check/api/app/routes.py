@@ -17,23 +17,23 @@ from sqlalchemy import or_
 def index():
     return 'home page'
 
-
+# Check if there is a catalog already in database
 @app.route('/checkForLoadedCatalog', methods=['GET'])
 def checkForLoadedCatalog():
     first = Catalog.query.first()
     if not first:
         return {"loaded": False}
     else:
-        return {"loaded": True}
+        catalogData = DataAboutCatalog.query.first()
+        return {"loaded": True, "thisTLD": catalogData.thisTLD, "thisFileName": catalogData.thisFileName}
+
+
 
 # Loads CSV file from user into database
-
-
 @app.route('/loadCSV', methods=['PUT'])
 def loadCSV():
 
-    
-    
+    print("request form: ", request.form)
 
     def allowed_file(filename):
         return '.' in filename and \
@@ -59,12 +59,12 @@ def loadCSV():
 
         # Delete all existing data in table
         Catalog.query.delete()
-        DataAboutCatalog.delete()
+        DataAboutCatalog.query.delete()
         db.session.commit()
 
         # Add TLD from user
         thisCatalog = DataAboutCatalog()
-        thisCatalog.thisTLD = request.form.tld
+        thisCatalog.thisTLD = request.form["tld"]
         print("thisCatalog.thisTLD: ", thisCatalog.thisTLD)
 
 
@@ -107,7 +107,7 @@ def loadCSV():
 
         db.session.commit()
 
-        return {"status": {"success": f"{request.files['file'].filename} successfully loaded."}}
+        return {"status": {"success": f"{request.files['file'].filename} successfully loaded."}, "fileName": request.files['file'].filename[:201]}
 
 
 @app.route('/errorOverview', methods=['GET'])

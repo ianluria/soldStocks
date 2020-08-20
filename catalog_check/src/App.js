@@ -10,6 +10,7 @@ import Row from 'react-bootstrap/Row';
 import Button from 'react-bootstrap/Button'
 import Col from 'react-bootstrap/Col'
 import Navbar from 'react-bootstrap/Navbar'
+import Nav from 'react-bootstrap/Nav'
 
 function App() {
 
@@ -17,6 +18,7 @@ function App() {
   const [status, setStatus] = useState();
   const [catalogErrors, setCatalogErrors] = useState();
   const [thisTLD, setThisTLD] = useState();
+  const [thisFileName, setThisFileName] = useState();
 
   // Check if there is a catalog loaded in database
   // If there is, load error status into state
@@ -25,6 +27,8 @@ function App() {
       .then(response => response.json())
       .then(data => {
         if (data) {
+          setThisTLD(data.thisTLD)
+          setThisFileName(data.thisFileName)
           generateErrorOverview(setCatalogErrors, setDisplay)
         } else {
           setStatus("Load a catalog to get started.")
@@ -37,27 +41,41 @@ function App() {
       <Row className="my-3">
         <Container fluid>
           <Navbar bg="dark" variant="dark" fluid>
-            <Navbar.Brand href="#home">Catalog Checker</Navbar.Brand>
-            <Container>
-              <Row className="w-100">
-                <Col sm={1}>
-                  <p className="text-light my-2 mx-3">TLD:&nbsp;&nbsp;<span className="text-monospace">{thisTLD}</span></p>
-                </Col>
-                <Col sm={"auto"}>
-                  <p className="text-light my-2 mx-3">CSV loaded: </p>
-                </Col>
-              </Row>
-            </Container>
+            <Navbar.Brand href="#home" className="mr-3">Catalog Checker</Navbar.Brand>
+            <Nav className="justify-content-between w-100">
+              <Nav.Item>
+                <span className="text-light">TLD:&nbsp;&nbsp;<span className="text-monospace">{thisTLD}</span></span>
+              </Nav.Item>
+              <Nav.Item>
+                <span className="text-light">CSV loaded: "<span className="text-monospace">{thisFileName}</span>"</span>
+              </Nav.Item>
+            </Nav>
           </Navbar>
         </Container>
       </Row>
       <Row className="my-3">
         <Container fluid>
           <Row>{status}</Row>
-          <Row className="justify-content-around"><Button variant="outline-dark" onClick={() => setDisplay(<LoadCSVFile setCatalogErrors={setCatalogErrors} setDisplay={setDisplay} setStatus={setStatus} thisTLD={thisTLD} setThisTLD={setThisTLD} />)}>Load CSV File</Button>
+          <Row className="justify-content-around">
+            <Button variant="outline-dark" onClick={() => setDisplay(
+              <LoadCSVFile
+                setCatalogErrors={setCatalogErrors}
+                setDisplay={setDisplay}
+                setStatus={setStatus}
+                thisTLD={thisTLD}
+                setThisTLD={setThisTLD}
+                setThisFileName={setThisFileName}
+              />)}>Load CSV File
+            </Button>
             {catalogErrors &&
-              <Button variant="outline-dark" onClick={() => setDisplay(<DisplayCatalogErrors setDisplay={setDisplay} catalogErrors={catalogErrors} setCatalogErrors={setCatalogErrors} />)}>Error Counts</Button>
-            }</Row>
+              <Button variant="outline-dark" onClick={() => setDisplay(
+                <DisplayCatalogErrors
+                  setDisplay={setDisplay}
+                  catalogErrors={catalogErrors}
+                  setCatalogErrors={setCatalogErrors}
+                />)}>Error Counts
+              </Button>}
+          </Row>
         </Container>
       </Row>
       <Row className="my-3">
@@ -208,8 +226,9 @@ function DisplayCatalogErrors(props) {
 }
 
 function LoadCSVFile(props) {
-  // const [thisTLD, setThisTLD] = useState();
+  const [thisLocalTLD, setThisLocalTLD] = useState();
   const fileInput = React.createRef();
+  console.log("load props: ", props)
 
   function handleSetupFormSubmit(e) {
 
@@ -220,23 +239,29 @@ function LoadCSVFile(props) {
 
     const formData = new FormData();
     formData.append("file", fileInput.current.files[0]);
-    formData.append("tld", props.thisTLD);
+    console.log(" formdata props tld", props.thisTLD);
+    console.log("formdata props status: ", props.status)
+    console.log("submit props: ", props)
+    formData.append("tld", thisLocalTLD);
 
     const requestOptions = {
       method: 'PUT',
-      body: formData,
+      body: formData
     };
 
     fetch('/loadCSV', requestOptions)
       .then(response => response.json())
       .then(data => {
         props.setStatus(data.status.success ? data.status.success : data.status.error)
+        props.setThisFileName(data.fileName)
         generateErrorOverview(props.setCatalogErrors, props.setDisplay)
       });
   }
 
   function selectChange(event) {
+    console.log("select tld", props.thisTLD);
     props.setThisTLD(event.target.value)
+    setThisLocalTLD(event.target.value)
     return;
   }
 
