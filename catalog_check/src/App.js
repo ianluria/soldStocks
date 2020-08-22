@@ -11,29 +11,33 @@ import Button from 'react-bootstrap/Button'
 import Col from 'react-bootstrap/Col'
 import Navbar from 'react-bootstrap/Navbar'
 import Nav from 'react-bootstrap/Nav'
+import Spinner from 'react-bootstrap/Spinner'
+import Alert from 'react-bootstrap/Alert'
 
 function App() {
 
   const [display, setDisplay] = useState();
-  const [status, setStatus] = useState();
+  const [status, setStatus] = useState({ success: "", error: "" });
   const [catalogErrors, setCatalogErrors] = useState();
   const [thisTLD, setThisTLD] = useState();
   const [thisFileName, setThisFileName] = useState();
-  const [loading, setLoading] = useState();
+  const [loading, setLoading] = useState("");
 
   // Check if there is a catalog loaded in database
   // If there is, load error status into state
   useEffect(() => {
+    setLoading("Checking for loaded catalog.")
     fetch('/checkForLoadedCatalog')
       .then(response => response.json())
       .then(data => {
         if (data) {
           setThisTLD(data.thisTLD)
           setThisFileName(data.thisFileName)
-          generateErrorOverview(setCatalogErrors, setDisplay)
+          generateErrorOverview(setCatalogErrors)
         } else {
           setStatus("Load a catalog to get started.")
         }
+        setLoading(false)
       });
   }, []);
 
@@ -54,35 +58,64 @@ function App() {
           </Navbar>
         </Container>
       </Row>
-      <Row className="my-3">
-        <Container fluid>
-          <Row>{status}</Row>
-          <Row className="justify-content-around">
-            <Button variant="outline-dark" onClick={() => setDisplay(
-              <LoadCSVFile
-                setCatalogErrors={setCatalogErrors}
-                setDisplay={setDisplay}
-                setStatus={setStatus}
-                thisTLD={thisTLD}
-                setThisTLD={setThisTLD}
-                setThisFileName={setThisFileName}
-              />)}>Load CSV File
+      <Row>
+        {!loading &&
+          <Container fluid>
+            <Row className="my-3">
+              <Container fluid>
+                <Row className="justify-content-center">
+                  {status.success &&
+                    <Alert variant="success">
+                      {status.success}
+                    </Alert>
+                  }
+                  {status.error &&
+                    <Alert variant="danger">
+                      {status.error}
+                    </Alert>
+                  }
+                </Row>
+                <Row className="justify-content-around">
+                  <Button variant="outline-dark" onClick={() => setDisplay(
+                    <LoadCSVFile
+                      setCatalogErrors={setCatalogErrors}
+                      setDisplay={setDisplay}
+                      setStatus={setStatus}
+                      setThisTLD={setThisTLD}
+                      setThisFileName={setThisFileName}
+                      setLoading={setLoading}
+                    />)}>Load CSV File
             </Button>
-            {catalogErrors &&
-              <Button variant="outline-dark" onClick={() => setDisplay(
-                <DisplayCatalogErrors
-                  setDisplay={setDisplay}
-                  catalogErrors={catalogErrors}
-                  setCatalogErrors={setCatalogErrors}
-                />)}>Error Counts
+                  {catalogErrors &&
+                    <Button variant="outline-dark" onClick={() => setDisplay(
+                      <DisplayCatalogErrors
+                        setDisplay={setDisplay}
+                        catalogErrors={catalogErrors}
+                        setCatalogErrors={setCatalogErrors}
+                      />)}>Error Counts
               </Button>}
-          </Row>
-        </Container>
-      </Row>
-      <Row className="my-3">
-        <Container fluid>
-          {display}
-        </Container>
+                </Row>
+              </Container>
+            </Row>
+            <Row className="my-3">
+              <Container fluid>
+                {display}
+              </Container>
+            </Row>
+          </Container>
+        }
+        {loading &&
+          <Container fluid>
+            <Row className="justify-content-center my-3">
+              <Spinner animation="border" role="status">
+                <span className="sr-only">Loading...</span>
+              </Spinner>
+            </Row>
+            <Row className="justify-content-center">
+              <p>{loading}</p>
+            </Row>
+          </Container>
+        }
       </Row>
     </Container>
   );
@@ -171,7 +204,7 @@ function DisplayCatalogErrors(props) {
     upcError: "Truncate any characters above 255.",
   }
 
-  // Copy the catalogErrors array  
+  // Copy the catalogErrors array
   const errorsArray = props.catalogErrors.slice();
 
   for (let row in errorsArray) {
@@ -235,15 +268,12 @@ function LoadCSVFile(props) {
   function handleSetupFormSubmit(e) {
 
     // set display to loading
-    props.setDisplay("Loading")
+    props.setLoading("Loading CSV File.")
 
     e.preventDefault();
 
     const formData = new FormData();
     formData.append("file", fileInput.current.files[0]);
-    console.log(" formdata props tld", props.thisTLD);
-    console.log("formdata props status: ", props.status)
-    console.log("submit props: ", props)
     formData.append("tld", thisLocalTLD);
 
     const requestOptions = {
@@ -254,14 +284,21 @@ function LoadCSVFile(props) {
     fetch('/loadCSV', requestOptions)
       .then(response => response.json())
       .then(data => {
-        props.setStatus(data.status.success ? data.status.success : data.status.error)
+        const updatedStatus = { success: "", error: "" };
+        if (data.status.success) {
+          updatedStatus.success = data.status.success;
+        } else if (data.status.error) {
+          updatedStatus.error = data.status.error;
+        }
+        props.setStatus(updatedStatus)
         props.setThisFileName(data.fileName)
-        generateErrorOverview(props.setCatalogErrors, props.setDisplay)
+        generateErrorOverview(props.setCatalogErrors)
+        props.setLoading(false)
+        props.setDisplay("")
       });
   }
 
   function selectChange(event) {
-    console.log("select tld", props.thisTLD);
     props.setThisTLD(event.target.value)
     setThisLocalTLD(event.target.value)
     return;
@@ -306,9 +343,7 @@ function LoadCSVFile(props) {
 }
 
 // Gets an accounting of errors from backend and adds it formatted to state
-function generateErrorOverview(setCatalogErrors, setDisplay) {
-
-  setDisplay("Loading")
+function generateErrorOverview(setCatalogErrors) {
 
   function addErrorsToState(errorsResponseData) {
 
@@ -341,7 +376,6 @@ function generateErrorOverview(setCatalogErrors, setDisplay) {
     .then(errorsResponse => errorsResponse.json())
     .then(errorsResponseData => addErrorsToState(errorsResponseData))
     .then(success => {
-      setDisplay("Finished")
     });
 }
 
