@@ -19,6 +19,7 @@ function App() {
   const [catalogErrors, setCatalogErrors] = useState();
   const [thisTLD, setThisTLD] = useState();
   const [thisFileName, setThisFileName] = useState();
+  const [loading, setLoading] = useState();
 
   // Check if there is a catalog loaded in database
   // If there is, load error status into state
@@ -187,7 +188,7 @@ function DisplayCatalogErrors(props) {
         <React.Fragment key={errorsArray[row].listKey}>
           <ListGroup.Item id={errorsArray[row].listKey} onClick={handleListItemClick}>
             {errorsArray[row].label} : {errorsArray[row].count}
-            <FontAwesomeIcon icon={faAngleDown} className="rotateIcon" />
+            <FontAwesomeIcon icon={faAngleDown} className="rotateIcon ml-3" />
           </ListGroup.Item>
 
           <Collapse id={errorsArray[row].listKey + "Collapse"} in={open[errorsArray[row].listKey]}>
@@ -205,7 +206,7 @@ function DisplayCatalogErrors(props) {
                     />
                   </Form>}
                 {errorsArray[row].count === 0 &&
-                  <p>No errors found.</p>
+                  <span>No errors found.</span>
                 }
               </ListGroup.Item>
             </div>
@@ -215,12 +216,14 @@ function DisplayCatalogErrors(props) {
   }
 
   const listHTML =
-    <React.Fragment>
-      <p onClick={handleErrorCorrectionSubmit}>Click to fix errors.</p>
-      <ListGroup>
-        {errorsArray}
-      </ListGroup>;
-    </React.Fragment>
+    <Row className="justify-content-center">
+      <Col sm={6}>
+        <Button variant="outline-danger" onClick={handleErrorCorrectionSubmit}>Fix Errors</Button>
+        <ListGroup className="mt-3">
+          {errorsArray}
+        </ListGroup>
+      </Col>
+    </Row>;
 
   return listHTML;
 }
@@ -228,7 +231,6 @@ function DisplayCatalogErrors(props) {
 function LoadCSVFile(props) {
   const [thisLocalTLD, setThisLocalTLD] = useState();
   const fileInput = React.createRef();
-  console.log("load props: ", props)
 
   function handleSetupFormSubmit(e) {
 
