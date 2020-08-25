@@ -1,9 +1,10 @@
 from app import app, db
 from app.models import Catalog, DataAboutCatalog
 from app import errorCheck
-from flask import request
+from flask import request, send_file
 import re
 import json
+import csv
 
 from datetime import datetime, timedelta, date
 from sqlalchemy import or_
@@ -17,7 +18,7 @@ from sqlalchemy import or_
 def index():
     return 'home page'
 
-# Check if there is a catalog already in database
+# Check if there is a catalog already loaded in database
 @app.route('/checkForLoadedCatalog', methods=['GET'])
 def checkForLoadedCatalog():
     first = Catalog.query.first()
@@ -28,10 +29,11 @@ def checkForLoadedCatalog():
         return {"loaded": True, "thisTLD": catalogData.thisTLD, "thisFileName": catalogData.thisFileName}
 
 
-
 # Loads CSV file from user into database
 @app.route('/loadCSV', methods=['PUT'])
 def loadCSV():
+
+    doubleQuotePattern = re.compile(" \'(\"[^\"]*\")\',")
 
     print("request form: ", request.form)
 
@@ -56,7 +58,6 @@ def loadCSV():
     # any way to prevent attacks from loading file?
     if request.files['file']:
 
-
         # Delete all existing data in table
         Catalog.query.delete()
         DataAboutCatalog.query.delete()
@@ -67,10 +68,26 @@ def loadCSV():
         thisCatalog.thisTLD = request.form["tld"]
         print("thisCatalog.thisTLD: ", thisCatalog.thisTLD)
 
-
         for index, row in enumerate(request.files['file']):
+            print(f"row {index}: ", row.decode("utf-8"))
             # Create a list with row's data
-            row = row.decode("utf-8").split(',')
+            row = row.decode("utf-8")
+            doubleQuoteSections = doubleQuotePattern.findall(row)
+            if doubleQuoteSections:
+                correctedRow = []
+                row = row.split('"')
+                for segment in row:
+                    added = False
+                    for section in doubleQuoteSections:
+                        if section in segment:
+                            # Add entire segment to correctedRow if it is enclosed in double quotes
+                            correctedRow.append(segment)
+                            added = True
+                    if not added:
+                        # Only add a split string on , if the segment is not enclosed in double quotes
+                        correctedRow.extend(column.split(","))
+                    
+            
             # error check first row to ensure it is a list of column names and that it is in the proper order
             if index == 0:
                 if not checkHeaderRow(row):
@@ -101,7 +118,7 @@ def loadCSV():
                 db.session.add(saveRow)
 
         # Add file name to database
-       
+
         thisCatalog.thisFileName = request.files['file'].filename
         db.session.add(thisCatalog)
 
@@ -169,3 +186,25 @@ def generalErrorFix():
 
 
 #titleManBrandErrors = Catalog.query.filter(or_(Catalog.titleError == True, Catalog.manufacturerError == True, Catalog.brandError == True)).count()
+
+# Create a CSV file of everything stored in the Catalog table
+@app.route('/downloadCSV', methods=['GET'])
+def downloadCSV():
+
+    with open('edited.csv', 'w', newline='') as csvfile:
+        fieldnames = {'Date Added': 'date', 'Track Item': 'trackItem', 'Retailer': 'retailer', 'Retailer Item ID': 'retailerItemID', 'TLD': 'tld', 'UPC': 'upc', 'Title': 'title', 'Manufacturer': 'manufacturer',
+                      'Brand': 'brand', 'Client Product Group': 'clientProductGroup', 'Category': 'category', 'Subcategory': 'subCategory', 'Amazon Sub Category': False, 'Platform': False, 'VAT Code': 'VATCode'}
+        writer = csv.DictWriter(csvfile, fieldnames=[
+                                column for column in fieldnames], restval='', extrasaction='ignore')
+
+        writer.writeheader()
+        allRows = Catalog.query.all()
+        for row in allRows:
+            row = {key: getattr(row, value)
+                   for key, value in fieldnames.items() if value}
+            row.update({'Amazon Sub Category': '', 'Platform': ''})
+            writer.writerow(row)
+
+        send_file(csvfile, attachment_filename="edited.csv")
+
+    return {"status": {"success": "Downloaded edited.csv with your corrections."}}

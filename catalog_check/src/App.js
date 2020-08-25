@@ -30,12 +30,12 @@ function App() {
     fetch('/checkForLoadedCatalog')
       .then(response => response.json())
       .then(data => {
-        if (data) {
+        if (data.loaded) {
           setThisTLD(data.thisTLD)
           setThisFileName(data.thisFileName)
           generateErrorOverview(setCatalogErrors)
         } else {
-          setStatus("Load a catalog to get started.")
+          setStatus({ success: "", error: "Load a catalog to get started." })
         }
         setLoading(false)
       });
@@ -76,24 +76,20 @@ function App() {
                   }
                 </Row>
                 <Row className="justify-content-around">
-                  <Button variant="outline-dark" onClick={() => setDisplay(
-                    <LoadCSVFile
-                      setCatalogErrors={setCatalogErrors}
-                      setDisplay={setDisplay}
-                      setStatus={setStatus}
-                      setThisTLD={setThisTLD}
-                      setThisFileName={setThisFileName}
-                      setLoading={setLoading}
-                    />)}>Load CSV File
-            </Button>
+                  <Button variant="outline-dark" onClick={handleLoadCSVButtonClick}>
+                    Load CSV File
+                  </Button>
+                  {/* If there are catalogErrors, a catalog has been loaded */}
                   {catalogErrors &&
-                    <Button variant="outline-dark" onClick={() => setDisplay(
-                      <DisplayCatalogErrors
-                        setDisplay={setDisplay}
-                        catalogErrors={catalogErrors}
-                        setCatalogErrors={setCatalogErrors}
-                      />)}>Error Counts
-              </Button>}
+                    <React.Fragment>
+                      <Button variant="outline-dark" onClick={handleErrorCountsButtonClick}>
+                        Error Counts
+                      </Button>
+                      <Button Button variant="outline-dark" onClick={downloadCSV}>
+                        Download CSV
+                      </Button>
+                    </React.Fragment>
+                  }
                 </Row>
               </Container>
             </Row>
@@ -117,8 +113,53 @@ function App() {
           </Container>
         }
       </Row>
-    </Container>
+    </Container >
   );
+
+  function downloadCSV(event) {
+    // Clear status
+    setStatus({ success: "", error: "" })
+
+    setLoading("Downloading CSV File.")
+
+    fetch('/downloadCSV')
+      .then(response => response.json())
+      .then(data => {
+        setStatus(data.status)
+        setLoading("")
+      });
+  }
+
+  function handleLoadCSVButtonClick(event) {
+    setDisplay(
+      <LoadCSVFile
+        setCatalogErrors={setCatalogErrors}
+        setDisplay={setDisplay}
+        setStatus={setStatus}
+        setThisTLD={setThisTLD}
+        setThisFileName={setThisFileName}
+        setLoading={setLoading}
+      />)
+    // Clear status
+    setStatus({ success: "", error: "" })
+    return;
+  }
+
+  function handleErrorCountsButtonClick(event) {
+
+    setDisplay(
+      <DisplayCatalogErrors
+        setDisplay={setDisplay}
+        catalogErrors={catalogErrors}
+        setCatalogErrors={setCatalogErrors}
+      />)
+    // Clear status
+    setStatus({ success: "", error: "" })
+
+    return;
+
+  }
+
 }
 
 function DisplayCatalogErrors(props) {
@@ -347,36 +388,29 @@ function generateErrorOverview(setCatalogErrors) {
 
   function addErrorsToState(errorsResponseData) {
 
-    return new Promise((resolve, reject) => {
+    const formattedErrorNames = {
+      totalCount: "Total Count", dateError: "Date Error", trackItemError: "Track Item Error", retailerError: "Retailer Error", retailerItemIDError: "Retailer Item ID Error", tldError: "TLD Error", upcError: "UPC Error", titleError: "Title Error",
+      manufacturerError: "Manufacturer Error", brandError: "Brand Error", clientProductGroupError: "Client Product Group Error", categoryError: "Category Error", subCategoryError: "Subcategory Error", VATCodeError: "VAT Code Error"
+    }
 
-      const formattedErrorNames = {
-        totalCount: "Total Count", dateError: "Date Error", trackItemError: "Track Item Error", retailerError: "Retailer Error", retailerItemIDError: "Retailer Item ID Error", tldError: "TLD Error", upcError: "UPC Error", titleError: "Title Error",
-        manufacturerError: "Manufacturer Error", brandError: "Brand Error", clientProductGroupError: "Client Product Group Error", categoryError: "Category Error", subCategoryError: "Subcategory Error", VATCodeError: "VAT Code Error"
-      }
+    const errorsArray = [];
 
-      const errorsArray = [];
+    for (let error in errorsResponseData) {
+      errorsArray.push({ listKey: error, label: formattedErrorNames[error], count: errorsResponseData[error] });
+    }
 
-      for (let error in errorsResponseData) {
-        errorsArray.push({ listKey: error, label: formattedErrorNames[error], count: errorsResponseData[error] });
-      }
+    errorsArray.sort((a, b) => b.count - a.count);
 
-      errorsArray.sort((a, b) => b.count - a.count);
+    // Move totalCount to the zero index
+    const returnArray = errorsArray.filter(element => element.listKey !== "totalCount");
+    returnArray.unshift(errorsArray.find(element => element.listKey === "totalCount"));
 
-      // Move totalCount to the zero index
-      const returnArray = errorsArray.filter(element => element.listKey !== "totalCount");
-      returnArray.unshift(errorsArray.find(element => element.listKey === "totalCount"));
-
-      setCatalogErrors(returnArray)
-
-      resolve(true);
-    });
+    setCatalogErrors(returnArray)
   }
 
   fetch('/errorOverview')
     .then(errorsResponse => errorsResponse.json())
-    .then(errorsResponseData => addErrorsToState(errorsResponseData))
-    .then(success => {
-    });
+    .then(errorsResponseData => addErrorsToState(errorsResponseData));
 }
 
 export default App;
