@@ -1,4 +1,5 @@
 {
     "python.pythonPath": "C:\\Python38\\python.exe",
-    "python.venvPath": "venv/Scripts/activate"
+    "python.venvPath": "venv/Scripts/activate",
+    "debug.console.closeOnEnd": true
 }
