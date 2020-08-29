@@ -1,10 +1,12 @@
-keepaCheckErrors = [("titleError", True),
-                    ("manufacturerError", True), ("brandError", True)]
+# 43553,Y,AMAZON,B0019TWRSO,COUK,,"HP CB316EE 364 Original Ink Cartridge, Black, Pack of 1",HP,HP,PRINTER SUPPLIES,INK,SF INK,,,UK1
+#
 
-requestJSON = {"titleError": True, "manufacturerError": False,
-               "brandError": True, "upcError": False, }
+import re
 
-t = [item for item in requestJSON.items() if item[1]
-     and item not in keepaCheckErrors]
+row = '43553,Y,AMAZON,B0019TWRSO,COUK,,"HP CB316EE 364 Original Ink Cartridge, Black, Pack of 1",HP,HP,PRINTER SUPPLIES,INK,SF INK,,,UK1'
 
-print(not t)
+pattern = re.compile('"[^"]*",|[^,]*,|[^\s]+')
+
+finalRow = [segment.strip(',"') for segment in re.findall(pattern, row)]
+
+print(finalRow)

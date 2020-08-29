@@ -8,6 +8,7 @@ import csv
 
 from datetime import datetime, timedelta, date
 from sqlalchemy import or_
+from io import TextIOWrapper
 
 
 # source venv/Scripts/activate
@@ -19,6 +20,8 @@ def index():
     return 'home page'
 
 # Check if there is a catalog already loaded in database
+
+
 @app.route('/checkForLoadedCatalog', methods=['GET'])
 def checkForLoadedCatalog():
     first = Catalog.query.first()
@@ -33,23 +36,17 @@ def checkForLoadedCatalog():
 @app.route('/loadCSV', methods=['PUT'])
 def loadCSV():
 
-    doubleQuotePattern = re.compile(" \'(\"[^\"]*\")\',")
-
-    print("request form: ", request.form)
-
     def allowed_file(filename):
-        return '.' in filename and \
-            filename.rsplit('.', 1)[1].lower() in {'csv'}
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'csv'}
 
-    def checkHeaderRow(row):
-        columnNames = {0: "date added", 1: "track Item", 2: "retailer", 3: "Retailer Item ID", 4: "tld", 5: "upc", 6: "title", 7: "Manufacturer", 8: "Brand",
-                       9: "Client Product Group", 10: "Category", 11: "Subcategory", 14: "VAT Code"}
+    # Check if the uploaded catalog is missing a required column
+    def missingColumn(row):
+        columnNames = ["date added",  "track Item", "retailer", "retailer item id", "tld", "upc", "title", "manufacturer", "brand",
+                       "client product group", "category", "subcategory", "vat code"]
 
-        for key, value in columnNames.items():
-            if row[key].strip().lower() != value.lower():
-                return False
+        checkRow = [rowKey.lower() in columnNames for rowKey in row.keys()]
 
-        return True
+        return False in checkRow
 
      # Error checking for incomplete file upload
     if 'file' not in request.files or request.files['file'].filename == '' or not allowed_file(request.files['file'].filename):
@@ -63,71 +60,46 @@ def loadCSV():
         DataAboutCatalog.query.delete()
         db.session.commit()
 
-        # Add TLD from user
+        # Add TLD and filename from user
         thisCatalog = DataAboutCatalog()
         thisCatalog.thisTLD = request.form["tld"]
-        print("thisCatalog.thisTLD: ", thisCatalog.thisTLD)
-
-        for index, row in enumerate(request.files['file']):
-            print(f"row {index}: ", row.decode("utf-8"))
-            # Create a list with row's data
-            row = row.decode("utf-8")
-            doubleQuoteSections = doubleQuotePattern.findall(row)
-            if doubleQuoteSections:
-                correctedRow = []
-                row = row.split('"')
-                for segment in row:
-                    added = False
-                    for section in doubleQuoteSections:
-                        if section in segment:
-                            # Add entire segment to correctedRow if it is enclosed in double quotes
-                            correctedRow.append(segment)
-                            added = True
-                    if not added:
-                        # Only add a split string on , if the segment is not enclosed in double quotes
-                        correctedRow.extend(column.split(","))
-                    
-            
-            # error check first row to ensure it is a list of column names and that it is in the proper order
-            if index == 0:
-                if not checkHeaderRow(row):
-                    return {"status": {"error": "Header must be formatted as: 'Date Added, Track Item, Retailer, Retailer Item ID, TLD, UPC, Title, Manufacturer, Brand, Client Product Group, Category, Subcategory, Amazon Sub Category, Platform, VAT Code'"}}
-
-            # Ignore first line which is the column names header row
-            if index > 0:
-                saveRow = Catalog()
-
-                saveRow.date = row[0].strip()
-                saveRow.trackItem = row[1].strip()
-                saveRow.retailer = row[2].strip()
-                saveRow.retailerItemID = row[3].strip()
-                saveRow.tld = row[4].strip()
-                saveRow.upc = row[5].strip()
-                saveRow.title = row[6].strip()
-                saveRow.manufacturer = row[7].strip()
-                saveRow.brand = row[8].strip()
-                saveRow.clientProductGroup = row[9].strip()
-                saveRow.category = row[10].strip()
-                saveRow.subCategory = row[11].strip()
-                saveRow.VATCode = row[14].strip()
-
-                # Run error checking on row
-                if not errorCheck.checkRowForErrors(saveRow):
-                    return {"status": {"error": "saveRow must be a Categories object."}}
-
-                db.session.add(saveRow)
-
-        # Add file name to database
-
         thisCatalog.thisFileName = request.files['file'].filename
         db.session.add(thisCatalog)
+
+        # Allow user's uploaded CSV file to be read by DictReader
+        csvfile = TextIOWrapper(request.files['file'], encoding='utf-8')
+        reader = csv.DictReader(csvfile)
+
+        print("reader 0: ", reader[0])
+
+        # List of csv column names mapped to their Catalog object property names
+        fieldnames = {'Date Added': 'date', 'Track Item': 'trackItem', 'Retailer': 'retailer', 'Retailer Item ID': 'retailerItemID', 'TLD': 'tld', 'UPC': 'upc', 'Title': 'title', 'Manufacturer': 'manufacturer',
+                      'Brand': 'brand', 'Client Product Group': 'clientProductGroup', 'Category': 'category', 'Subcategory': 'subCategory', 'Amazon Sub Category': 'amazonSubCategory', 'Platform': 'platform', 'VAT Code': 'VATCode'}
+
+        for index, row in reader:
+
+            if index == 0:
+                if missingColumn(row):
+                    return {"status": {"error": "Header must be formatted as: 'Date Added, Track Item, Retailer, Retailer Item ID, TLD, UPC, Title, Manufacturer, Brand, Client Product Group, Category, Subcategory, Amazon Sub Category, Platform, VAT Code'"}}
+
+            saveRow = Catalog()
+            for CSVColumnName, catalogPropertyName in fieldnames.items():
+
+                setattr(saveRow, catalogPropertyName,
+                        row[CSVColumnName])
+
+            # Run error checking on row
+            if not errorCheck.checkRowForErrors(saveRow):
+                return {"status": {"error": "saveRow must be a Categories object."}}
+
+            db.session.add(saveRow)
 
         db.session.commit()
 
         return {"status": {"success": f"{request.files['file'].filename} successfully loaded."}, "fileName": request.files['file'].filename[:201]}
 
 
-@app.route('/errorOverview', methods=['GET'])
+@ app.route('/errorOverview', methods=['GET'])
 def errorOverview():
 
     # dict of all error types
@@ -144,7 +116,7 @@ def errorOverview():
     return errorTypes
 
 
-@app.route('/keepaErrorFix', methods=['POST'])
+@ app.route('/keepaErrorFix', methods=['POST'])
 def keepaErrorFix():
     errorFixCount = 0
 
@@ -162,7 +134,7 @@ def keepaErrorFix():
     return 0
 
 
-@app.route('/generalErrorFix', methods=['POST'])
+@ app.route('/generalErrorFix', methods=['POST'])
 def generalErrorFix():
 
     print(request.json)
@@ -185,17 +157,17 @@ def generalErrorFix():
     return {"status": {"success": f"Repaired {errorFixCount} number of errors."}}
 
 
-#titleManBrandErrors = Catalog.query.filter(or_(Catalog.titleError == True, Catalog.manufacturerError == True, Catalog.brandError == True)).count()
+# titleManBrandErrors = Catalog.query.filter(or_(Catalog.titleError == True, Catalog.manufacturerError == True, Catalog.brandError == True)).count()
 
 # Create a CSV file of everything stored in the Catalog table
-@app.route('/downloadCSV', methods=['GET'])
+@ app.route('/downloadCSV', methods=['GET'])
 def downloadCSV():
 
     with open('edited.csv', 'w', newline='') as csvfile:
         fieldnames = {'Date Added': 'date', 'Track Item': 'trackItem', 'Retailer': 'retailer', 'Retailer Item ID': 'retailerItemID', 'TLD': 'tld', 'UPC': 'upc', 'Title': 'title', 'Manufacturer': 'manufacturer',
                       'Brand': 'brand', 'Client Product Group': 'clientProductGroup', 'Category': 'category', 'Subcategory': 'subCategory', 'Amazon Sub Category': False, 'Platform': False, 'VAT Code': 'VATCode'}
         writer = csv.DictWriter(csvfile, fieldnames=[
-                                column for column in fieldnames], restval='', extrasaction='ignore')
+            column for column in fieldnames], restval='', extrasaction='ignore')
 
         writer.writeheader()
         allRows = Catalog.query.all()
