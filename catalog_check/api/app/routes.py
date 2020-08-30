@@ -39,14 +39,14 @@ def loadCSV():
     def allowed_file(filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'csv'}
 
-    # Check if the uploaded catalog is missing a required column
+    # Check if the uploaded catalog is has at least one required column
     def missingColumn(row):
         columnNames = ["date added",  "track Item", "retailer", "retailer item id", "tld", "upc", "title", "manufacturer", "brand",
                        "client product group", "category", "subcategory", "vat code"]
 
         checkRow = [rowKey.lower() in columnNames for rowKey in row.keys()]
 
-        return False in checkRow
+        return not True in checkRow
 
      # Error checking for incomplete file upload
     if 'file' not in request.files or request.files['file'].filename == '' or not allowed_file(request.files['file'].filename):
@@ -70,23 +70,22 @@ def loadCSV():
         csvfile = TextIOWrapper(request.files['file'], encoding='utf-8')
         reader = csv.DictReader(csvfile)
 
-        print("reader 0: ", reader[0])
-
         # List of csv column names mapped to their Catalog object property names
         fieldnames = {'Date Added': 'date', 'Track Item': 'trackItem', 'Retailer': 'retailer', 'Retailer Item ID': 'retailerItemID', 'TLD': 'tld', 'UPC': 'upc', 'Title': 'title', 'Manufacturer': 'manufacturer',
                       'Brand': 'brand', 'Client Product Group': 'clientProductGroup', 'Category': 'category', 'Subcategory': 'subCategory', 'Amazon Sub Category': 'amazonSubCategory', 'Platform': 'platform', 'VAT Code': 'VATCode'}
 
-        for index, row in reader:
-
+        for index, row in enumerate(reader):
+            # Check the very first row to see if there is at least one required column present
             if index == 0:
                 if missingColumn(row):
-                    return {"status": {"error": "Header must be formatted as: 'Date Added, Track Item, Retailer, Retailer Item ID, TLD, UPC, Title, Manufacturer, Brand, Client Product Group, Category, Subcategory, Amazon Sub Category, Platform, VAT Code'"}}
+                    return {"status": {"error": "Header must have at least one column from: 'Date Added, Track Item, Retailer, Retailer Item ID, TLD, UPC, Title, Manufacturer, Brand, Client Product Group, Category, Subcategory, Amazon Sub Category, Platform, VAT Code'"}}
 
             saveRow = Catalog()
             for CSVColumnName, catalogPropertyName in fieldnames.items():
 
-                setattr(saveRow, catalogPropertyName,
-                        row[CSVColumnName])
+                if CSVColumnName in row.keys():
+                    setattr(saveRow, catalogPropertyName,
+                            row[CSVColumnName])
 
             # Run error checking on row
             if not errorCheck.checkRowForErrors(saveRow):
@@ -165,16 +164,15 @@ def downloadCSV():
 
     with open('edited.csv', 'w', newline='') as csvfile:
         fieldnames = {'Date Added': 'date', 'Track Item': 'trackItem', 'Retailer': 'retailer', 'Retailer Item ID': 'retailerItemID', 'TLD': 'tld', 'UPC': 'upc', 'Title': 'title', 'Manufacturer': 'manufacturer',
-                      'Brand': 'brand', 'Client Product Group': 'clientProductGroup', 'Category': 'category', 'Subcategory': 'subCategory', 'Amazon Sub Category': False, 'Platform': False, 'VAT Code': 'VATCode'}
+                      'Brand': 'brand', 'Client Product Group': 'clientProductGroup', 'Category': 'category', 'Subcategory': 'subCategory', 'Amazon Sub Category': 'amazonSubCategory', 'Platform': 'platform', 'VAT Code': 'VATCode'}
         writer = csv.DictWriter(csvfile, fieldnames=[
             column for column in fieldnames], restval='', extrasaction='ignore')
 
         writer.writeheader()
         allRows = Catalog.query.all()
         for row in allRows:
-            row = {key: getattr(row, value)
-                   for key, value in fieldnames.items() if value}
-            row.update({'Amazon Sub Category': '', 'Platform': ''})
+            row = {csvName: getattr(row, CatalogName, '')
+                   for csvName, CatalogName in fieldnames.items()}
             writer.writerow(row)
 
         send_file(csvfile, attachment_filename="edited.csv")
