@@ -136,16 +136,17 @@ def keepaErrorFix():
 @ app.route('/generalErrorFix', methods=['POST'])
 def generalErrorFix():
 
-    print(request.json)
+    print("general error fix: ", request.json)
+
     errorFixCount = 0
 
     generalErrors = ["dateError", "retailerError", "tldError", "upcError"]
 
     # Fix all other non-Keepa errors
-    if [item for item in request.json.items() if item[1] and item[0] in generalErrors]:
+    if [item for item in request.json if item in generalErrors]:
 
-        errorColumns = [getattr(Catalog, error[0]).__eq__(True) for error in request.json.items()
-                        if error[0] in generalErrors and error[1]]
+        errorColumns = [getattr(Catalog, error).__eq__(True) for error in request.json
+                        if error in generalErrors]
 
         allOtherErrors = Catalog.query.filter(or_(*errorColumns)).all()
 

@@ -152,6 +152,7 @@ function App() {
         setDisplay={setDisplay}
         catalogErrors={catalogErrors}
         setCatalogErrors={setCatalogErrors}
+        setStatus={setStatus}
       />)
     // Clear status
     setStatus({ success: "", error: "" })
@@ -185,11 +186,13 @@ function DisplayCatalogErrors(props) {
 
   // Add or remove an error type to/from fixErrors on switch press
   function handleErrorSwitch(e) {
+
+    const thisError = e.currentTarget.id.replace("Switch", "");
     const updatedFixErrors = Object.assign({}, fixErrors);
-    if (updatedFixErrors.hasOwnProperty(e.currentTarget.id)) {
-      updatedFixErrors[e.currentTarget.id] = !updatedFixErrors[e.currentTarget.id];
+    if (updatedFixErrors.hasOwnProperty(thisError)) {
+      updatedFixErrors[thisError] = !updatedFixErrors[thisError];
     } else {
-      updatedFixErrors[e.currentTarget.id] = true;
+      updatedFixErrors[thisError] = true;
     }
     setFixErrors(updatedFixErrors)
     return;
@@ -228,11 +231,14 @@ function DisplayCatalogErrors(props) {
         fetch('/generalErrorFix', requestOptions)
           .then(response => response.json())
           .then(data => {
-
+            console.log("data: ", data);
           });
       }
     }
-    // else add error status message for empty fixErrors
+    // add error status message for empty fixErrors
+    else {
+      props.setStatus({ success: "", error: "Choose an error type to make a correction." })
+    }
   }
 
   const errorMessages = {
