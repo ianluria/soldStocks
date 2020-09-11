@@ -130,5 +130,5 @@ dmypy.json
 
 #User files
 /catalog_check/api/app/test.py
-.vscode/
+.vscode
 edited.csv
