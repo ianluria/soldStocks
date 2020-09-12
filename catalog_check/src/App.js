@@ -19,7 +19,6 @@ function App() {
   const [display, setDisplay] = useState();
   const [status, setStatus] = useState({ success: "", error: "" });
   const [catalogErrors, setCatalogErrors] = useState();
-  const [thisTLD, setThisTLD] = useState();
   const [thisFileName, setThisFileName] = useState();
   const [loading, setLoading] = useState("");
 
@@ -46,11 +45,8 @@ function App() {
       <Row className="my-3">
         <Container fluid>
           <Navbar bg="dark" variant="dark" fluid>
-            <Navbar.Brand href="#home" className="mr-3">Catalog Checker</Navbar.Brand>
+            <Navbar.Brand href="#home" className="mr-3">Sold Stocks</Navbar.Brand>
             <Nav className="justify-content-between w-100">
-              <Nav.Item>
-                <span className="text-light">TLD:&nbsp;&nbsp;<span className="text-monospace">{thisTLD}</span></span>
-              </Nav.Item>
               <Nav.Item>
                 <span className="text-light">CSV loaded: "<span className="text-monospace">{thisFileName}</span>"</span>
               </Nav.Item>
@@ -82,8 +78,8 @@ function App() {
                   {/* If there are catalogErrors, a catalog has been loaded */}
                   {catalogErrors &&
                     <React.Fragment>
-                      <Button variant="outline-dark" onClick={handleErrorCountsButtonClick}>
-                        Error Counts
+                      <Button variant="outline-dark" onClick={handlePreformanceButtonClick}>
+                        Calculate Preformance
                       </Button>
                       <Button Button variant="outline-dark" onClick={downloadCSV}>
                         Download CSV
@@ -145,10 +141,10 @@ function App() {
     return;
   }
 
-  function handleErrorCountsButtonClick(event) {
+  function handlePreformanceButtonClick(event) {
 
     setDisplay(
-      <DisplayCatalogErrors
+      <DisplayPreformance
         setDisplay={setDisplay}
         catalogErrors={catalogErrors}
         setCatalogErrors={setCatalogErrors}
@@ -163,12 +159,11 @@ function App() {
 
 }
 
-function DisplayCatalogErrors(props) {
+function DisplayPreformance(props) {
 
   // Used to track which collapse list items should be open
   const [open, setOpen] = useState({});
-  // Used to track which error types the user wants fixed
-  const [fixErrors, setFixErrors] = useState({});
+
 
   // combine handleListItemClick into one handler
 
@@ -184,108 +179,44 @@ function DisplayCatalogErrors(props) {
     return;
   }
 
-  // Add or remove an error type to/from fixErrors on switch press
-  function handleErrorSwitch(e) {
 
-    const thisError = e.currentTarget.id.replace("Switch", "");
-    const updatedFixErrors = Object.assign({}, fixErrors);
-    if (updatedFixErrors.hasOwnProperty(thisError)) {
-      updatedFixErrors[thisError] = !updatedFixErrors[thisError];
-    } else {
-      updatedFixErrors[thisError] = true;
-    }
-    setFixErrors(updatedFixErrors)
-    return;
-  }
 
-  // Send list of errors to fix to backend
-  function handleErrorCorrectionSubmit(e) {
-    if (Object.keys(fixErrors).length !== 0) {
-
-      // Array of the listKey names of all errors the user wants fixed.
-      const errorsToFix = Object.entries(fixErrors).filter(error => error[1] === true).map(trueError => trueError[0]);
-
-      const requestOptions = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(errorsToFix)
-      };
-
-      // Check if there are any errors that need to be fixed with Keepa
-      const keepaErrors = ["titleError", "brandError", "manufacturerError"];
-
-      if (errorsToFix.some(error => keepaErrors.includes(error))) {
-
-        fetch('/keepaErrorFix', requestOptions)
-          .then(response => response.json())
-          .then(data => {
-
-          });
-      }
-
-      const generalErrors = ["dateError", "retailerError", "tldError", "upcError"];
-
-      if (errorsToFix.some(error => generalErrors.includes(error))) {
-        fetch('/generalErrorFix', requestOptions)
-          .then(response => response.json())
-          .then(data => {
-            console.log("data: ", data);
-          });
-      }
-    }
-    // add error status message for empty fixErrors
-    else {
-      props.setStatus({ success: "", error: "Choose an error type to make a correction." })
-    }
-  }
-
-  const errorMessages = {
-    dateError: "Convert date to YYYY-MM-DD format.",
-    titleError: "Get updated title from Keepa.",
-    brandError: "Get updated brand from Keepa.",
-    manufacturerError: "Get updated manufacturer from Keepa.",
-    tldError: "Fill in blank TLD fields using the catalog's TLD.",
-    retailerError: "Add Amazon as retailer.",
-    upcError: "Truncate any characters above 255.",
-  }
 
   // Copy the catalogErrors array
-  const errorsArray = props.catalogErrors.slice();
+  const stocksArray = props.catalogErrors.slice();
 
-  for (let row in errorsArray) {
+  for (let row in stocksArray) {
     // Total count does not need a drop down list item.
-    if (errorsArray[row].listKey === 'totalCount') {
-      errorsArray[row] =
-        <React.Fragment key={errorsArray[row].listKey}>
-          <ListGroup.Item id={errorsArray[row].listKey}>
-            {errorsArray[row].label} : {errorsArray[row].count}
+    if (stocksArray[row].listKey === 'totalCount') {
+      stocksArray[row] =
+        <React.Fragment key={stocksArray[row].listKey}>
+          <ListGroup.Item id={stocksArray[row].listKey}>
+            {stocksArray[row].label} : {stocksArray[row].count}
           </ListGroup.Item>
         </React.Fragment>;
     } else {
-      errorsArray[row] =
-        <React.Fragment key={errorsArray[row].listKey}>
-          <ListGroup.Item id={errorsArray[row].listKey} onClick={handleListItemClick}>
-            {errorsArray[row].label} : {errorsArray[row].count}
+      stocksArray[row] =
+        <React.Fragment key={stocksArray[row].listKey}>
+          <ListGroup.Item id={stocksArray[row].listKey} onClick={handleListItemClick}>
+            {stocksArray[row].label} : {stocksArray[row].count}
             <FontAwesomeIcon icon={faAngleDown} className="rotateIcon ml-3" />
           </ListGroup.Item>
 
-          <Collapse id={errorsArray[row].listKey + "Collapse"} in={open[errorsArray[row].listKey]}>
+          <Collapse id={stocksArray[row].listKey + "Collapse"} in={open[stocksArray[row].listKey]}>
             {/* Div added to smooth collapse transition */}
             <div>
               <ListGroup.Item>
                 {/* Only display error correction switch if there were errors found */}
-                {errorsArray[row].count > 0 &&
+                {stocksArray[row].count > 0 &&
                   <Form>
                     <Form.Check
                       type="switch"
-                      id={errorsArray[row].listKey + "Switch"}
-                      label={errorMessages[errorsArray[row].listKey]}
+                      id={stocksArray[row].listKey + "Switch"}
+                      label={errorMessages[stocksArray[row].listKey]}
                       onClick={handleErrorSwitch}
                     />
                   </Form>}
-                {errorsArray[row].count === 0 &&
+                {stocksArray[row].count === 0 &&
                   <span>No errors found.</span>
                 }
               </ListGroup.Item>
@@ -298,9 +229,9 @@ function DisplayCatalogErrors(props) {
   const listHTML =
     <Row className="justify-content-center">
       <Col sm={6}>
-        <Button variant="outline-danger" onClick={handleErrorCorrectionSubmit}>Fix Errors</Button>
+        {/* <Button variant="outline-danger" onClick={handleErrorCorrectionSubmit}>Fix Errors</Button> */}
         <ListGroup className="mt-3">
-          {errorsArray}
+          {stocksArray}
         </ListGroup>
       </Col>
     </Row>;
@@ -365,19 +296,6 @@ function LoadCSVFile(props) {
               />
             </Form.Group>
           </Col>
-          <Col sm={3} >
-            <Form.Group controlId="formGroupSelect">
-              <Form.Label>Select Catalog TLD</Form.Label>
-              <Form.Control as="select" htmlSize={2} onChange={selectChange} custom>
-                <option>US</option>
-                <option>CA</option>
-                <option>UK</option>
-                <option>FR</option>
-                <option>ES</option>
-                <option>DE</option>
-              </Form.Control>
-            </Form.Group>
-          </Col>
         </Row>
         <Row className="justify-content-center my-3">
           <Col sm={"auto"}>
@@ -387,36 +305,6 @@ function LoadCSVFile(props) {
       </Container>
     </Row>
   );
-}
-
-// Gets an accounting of errors from backend and adds it formatted to state
-function generateErrorOverview(setCatalogErrors) {
-
-  function addErrorsToState(errorsResponseData) {
-
-    const formattedErrorNames = {
-      totalCount: "Total Count", dateError: "Date Error", trackItemError: "Track Item Error", retailerError: "Retailer Error", retailerItemIDError: "Retailer Item ID Error", tldError: "TLD Error", upcError: "UPC Error", titleError: "Title Error",
-      manufacturerError: "Manufacturer Error", brandError: "Brand Error", clientProductGroupError: "Client Product Group Error", categoryError: "Category Error", subCategoryError: "Subcategory Error", VATCodeError: "VAT Code Error"
-    }
-
-    const errorsArray = [];
-
-    for (let error in errorsResponseData) {
-      errorsArray.push({ listKey: error, label: formattedErrorNames[error], count: errorsResponseData[error] });
-    }
-
-    errorsArray.sort((a, b) => b.count - a.count);
-
-    // Move totalCount to the zero index
-    const returnArray = errorsArray.filter(element => element.listKey !== "totalCount");
-    returnArray.unshift(errorsArray.find(element => element.listKey === "totalCount"));
-
-    setCatalogErrors(returnArray)
-  }
-
-  fetch('/errorOverview')
-    .then(errorsResponse => errorsResponse.json())
-    .then(errorsResponseData => addErrorsToState(errorsResponseData));
 }
 
 export default App;
