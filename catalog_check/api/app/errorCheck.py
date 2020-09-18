@@ -2,6 +2,14 @@ from app.models import Catalog
 import re
 
 
+# Check if the row has specific columns included
+def missingColumn(row=row, columns=columns):
+
+    checkRow = [columnName in row for columnName in columns]
+
+    return not True in checkRow
+
+
 def checkRowForErrors(row):
 
     if not isinstance(row, Catalog):
