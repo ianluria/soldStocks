@@ -13,6 +13,7 @@ import Navbar from 'react-bootstrap/Navbar'
 import Nav from 'react-bootstrap/Nav'
 import Spinner from 'react-bootstrap/Spinner'
 import Alert from 'react-bootstrap/Alert'
+import { Dropdown } from 'react-bootstrap';
 
 function App() {
 
@@ -22,19 +23,17 @@ function App() {
   const [thisFileName, setThisFileName] = useState();
   const [loading, setLoading] = useState("");
 
-  // Check if there is a catalog loaded in database
-  // If there is, load error status into state
+  // Check if there is a stock history loaded in database
   useEffect(() => {
-    setLoading("Checking for loaded catalog.")
-    fetch('/checkForLoadedCatalog')
+    setLoading("Checking for loaded stock sale history.")
+    fetch('/checkForLoadedSales')
       .then(response => response.json())
       .then(data => {
         if (data.loaded) {
-          setThisTLD(data.thisTLD)
           setThisFileName(data.thisFileName)
-          generateErrorOverview(setCatalogErrors)
+
         } else {
-          setStatus({ success: "", error: "Load a catalog to get started." })
+          setStatus({ success: "", error: "Load stock sales CSV to get started." })
         }
         setLoading(false)
       });
@@ -146,8 +145,6 @@ function App() {
     setDisplay(
       <DisplayPreformance
         setDisplay={setDisplay}
-        catalogErrors={catalogErrors}
-        setCatalogErrors={setCatalogErrors}
         setStatus={setStatus}
       />)
     // Clear status
@@ -158,14 +155,11 @@ function App() {
   }
 
 }
-
+// take api results and transform into an Array.  calculate the total return for each ticker symbol and display date break downs by Dropdown. for more than 10 transactions provide a new display element
 function DisplayPreformance(props) {
 
   // Used to track which collapse list items should be open
   const [open, setOpen] = useState({});
-
-
-  // combine handleListItemClick into one handler
 
   // Expand collapse list item when 'parent' list item is clicked
   function handleListItemClick(e) {
@@ -181,62 +175,52 @@ function DisplayPreformance(props) {
 
 
 
-
-  // Copy the catalogErrors array
-  const stocksArray = props.catalogErrors.slice();
+  // get preformance data and save locally
+  const stocksArray = []
 
   for (let row in stocksArray) {
-    // Total count does not need a drop down list item.
-    if (stocksArray[row].listKey === 'totalCount') {
-      stocksArray[row] =
-        <React.Fragment key={stocksArray[row].listKey}>
-          <ListGroup.Item id={stocksArray[row].listKey}>
-            {stocksArray[row].label} : {stocksArray[row].count}
-          </ListGroup.Item>
-        </React.Fragment>;
-    } else {
-      stocksArray[row] =
-        <React.Fragment key={stocksArray[row].listKey}>
-          <ListGroup.Item id={stocksArray[row].listKey} onClick={handleListItemClick}>
-            {stocksArray[row].label} : {stocksArray[row].count}
-            <FontAwesomeIcon icon={faAngleDown} className="rotateIcon ml-3" />
-          </ListGroup.Item>
 
-          <Collapse id={stocksArray[row].listKey + "Collapse"} in={open[stocksArray[row].listKey]}>
-            {/* Div added to smooth collapse transition */}
-            <div>
-              <ListGroup.Item>
-                {/* Only display error correction switch if there were errors found */}
-                {stocksArray[row].count > 0 &&
-                  <Form>
-                    <Form.Check
-                      type="switch"
-                      id={stocksArray[row].listKey + "Switch"}
-                      label={errorMessages[stocksArray[row].listKey]}
-                      onClick={handleErrorSwitch}
-                    />
-                  </Form>}
-                {stocksArray[row].count === 0 &&
-                  <span>No errors found.</span>
-                }
-              </ListGroup.Item>
-            </div>
-          </Collapse>
-        </React.Fragment>;
-    }
+    stocksArray[row] =
+      <React.Fragment key={stocksArray[row].listKey}>
+        <ListGroup.Item id={stocksArray[row].listKey} onClick={handleListItemClick}>
+          {stocksArray[row].label} : {stocksArray[row].performance}
+          <FontAwesomeIcon icon={faAngleDown} className="rotateIcon ml-3" />
+        </ListGroup.Item>
+
+        <Collapse id={stocksArray[row].listKey + "Collapse"} in={open[stocksArray[row].listKey]}>
+          {/* Div added to smooth collapse transition */}
+          <div>
+            <ListGroup.Item>
+              {/* Only display error correction switch if there were errors found */}
+              {stocksArray[row].count > 0 &&
+                <Form>
+                  <Form.Check
+                    type="switch"
+                    id={stocksArray[row].listKey + "Switch"}
+                    label={errorMessages[stocksArray[row].listKey]}
+                    onClick={handleErrorSwitch}
+                  />
+                </Form>}
+              {stocksArray[row].count === 0 &&
+                <span>No errors found.</span>
+              }
+            </ListGroup.Item>
+          </div>
+        </Collapse>
+      </React.Fragment>;
   }
+}
 
-  const listHTML =
-    <Row className="justify-content-center">
-      <Col sm={6}>
-        {/* <Button variant="outline-danger" onClick={handleErrorCorrectionSubmit}>Fix Errors</Button> */}
-        <ListGroup className="mt-3">
-          {stocksArray}
-        </ListGroup>
-      </Col>
-    </Row>;
+const listHTML =
+  <Row className="justify-content-center">
+    <Col sm={6}>
+      <ListGroup className="mt-3">
+        {stocksArray}
+      </ListGroup>
+    </Col>
+  </Row>;
 
-  return listHTML;
+return listHTML;
 }
 
 function LoadCSVFile(props) {
@@ -274,12 +258,6 @@ function LoadCSVFile(props) {
         props.setLoading(false)
         props.setDisplay("")
       });
-  }
-
-  function selectChange(event) {
-    props.setThisTLD(event.target.value)
-    setThisLocalTLD(event.target.value)
-    return;
   }
 
   return (

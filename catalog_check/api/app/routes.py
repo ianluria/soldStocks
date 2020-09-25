@@ -20,9 +20,34 @@ from io import TextIOWrapper
 def index():
     return 'home page'
 
+# query database and group results by ticker symbol and by date
+# get current price information for each ticker
+# get historical price information for any missing historical sales
+# restructure list into a dict for return
+
+
+@app.route('/generateSalesPerformance')
+def generateSalesPerformance():
+
+    sales = Sales.query.order_by(Sales.ticker, Sales.date).all()
+
+    # Set of unique tickers
+    tickers = {sale.ticker for sale in sales}
+
+    # Create a dictionary with each ticker
+    formattedSales = {ticker: {history: [], currentPrice: 0}
+                      for ticker in tickers}
+
+    for sale in sales:
+        thisSalesDetails = {date: sale.date,
+                            priceSold: sale.priceSold, shares: sale.shares}
+        # Add this sale's details to the history list for the respective ticker
+        formattedSales[sale.ticker]["history"].append(thisSalesDetails)
+
+    
+
+
 # Check if there is a catalog already loaded in database
-
-
 @app.route('/checkForLoadedSales', methods=['GET'])
 def checkForLoadedSales():
     first = Sales.query.first()
@@ -39,8 +64,6 @@ def loadCSV():
 
     def allowed_file(filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'csv'}
-
-    
 
      # Error checking for incomplete file upload
     if 'file' not in request.files or request.files['file'].filename == '' or not allowed_file(request.files['file'].filename):
