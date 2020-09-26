@@ -29,14 +29,18 @@ def index():
 @app.route('/generateSalesPerformance')
 def generateSalesPerformance():
 
-    sales = Sales.query.order_by(Sales.ticker, Sales.date).all()
+    # Generate a list of unique ticker symbols
+    distinctTickers = Sales.query.distinct(Sales.ticker).all()
 
     # Set of unique tickers
-    tickers = {sale.ticker for sale in sales}
+    tickers = {sale.ticker for sale in distinctTickers}
 
     # Create a dictionary with each ticker
     formattedSales = {ticker: {history: [], currentPrice: 0}
                       for ticker in tickers}
+
+    # consider making a tuple
+    sales = Sales.query.order_by(Sales.ticker, Sales.date).all()
 
     for sale in sales:
         thisSalesDetails = {date: sale.date,
@@ -44,7 +48,7 @@ def generateSalesPerformance():
         # Add this sale's details to the history list for the respective ticker
         formattedSales[sale.ticker]["history"].append(thisSalesDetails)
 
-    
+    return formattedSales
 
 
 # Check if there is a catalog already loaded in database
