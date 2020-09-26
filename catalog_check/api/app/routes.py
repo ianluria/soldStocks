@@ -1,6 +1,5 @@
 from app import app, db
 from app.models import Sales, Metadata
-from app.errorCheck import missingColumn
 from flask import request, send_file
 import re
 import json
@@ -85,7 +84,7 @@ def loadCSV():
         reader = csv.DictReader(csvfile)
 
         # Dictionary of csv column names mapped to their Sales object property names
-        fieldnames = {"ticker": "ticker", "date": "date", "price", "priceSold", "shares": "shares"}
+        fieldnames = {"ticker": "ticker", "date": "date", "price": "priceSold", "shares": "shares"}
         requiredFields = [f for f in fieldNames if f != "price"]
 
         for index, row in enumerate(reader):
