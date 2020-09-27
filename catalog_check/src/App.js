@@ -45,11 +45,13 @@ function App() {
         <Container fluid>
           <Navbar bg="dark" variant="dark" fluid>
             <Navbar.Brand href="#home" className="mr-3">Sold Stocks</Navbar.Brand>
-            <Nav className="justify-content-end w-100">
-              <Nav.Item>
-                <span className="text-light">CSV loaded: "<span className="text-monospace">{thisFileName}</span>"</span>
-              </Nav.Item>
-            </Nav>
+            {loadedCSV &&
+              <Nav className="justify-content-end w-100">
+                <Nav.Item>
+                  <span className="text-light">CSV loaded: "<span className="text-monospace">{thisFileName}</span>"</span>
+                </Nav.Item>
+              </Nav>
+            }
           </Navbar>
         </Container>
       </Row>
@@ -190,7 +192,7 @@ function DisplayPreformance(props) {
           <div>
             <ListGroup.Item>
               {/* Only display error correction switch if there were errors found */}
-              
+
             </ListGroup.Item>
           </div>
         </Collapse>
