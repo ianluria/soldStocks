@@ -19,7 +19,7 @@ function App() {
 
   const [display, setDisplay] = useState();
   const [status, setStatus] = useState({ success: "", error: "" });
-  const [catalogErrors, setCatalogErrors] = useState();
+  const [loadedCSV, setLoadedCSV] = useState();
   const [thisFileName, setThisFileName] = useState();
   const [loading, setLoading] = useState("");
 
@@ -45,7 +45,7 @@ function App() {
         <Container fluid>
           <Navbar bg="dark" variant="dark" fluid>
             <Navbar.Brand href="#home" className="mr-3">Sold Stocks</Navbar.Brand>
-            <Nav className="justify-content-between w-100">
+            <Nav className="justify-content-end w-100">
               <Nav.Item>
                 <span className="text-light">CSV loaded: "<span className="text-monospace">{thisFileName}</span>"</span>
               </Nav.Item>
@@ -74,8 +74,7 @@ function App() {
                   <Button variant="outline-dark" onClick={handleLoadCSVButtonClick}>
                     Load CSV File
                   </Button>
-                  {/* If there are catalogErrors, a catalog has been loaded */}
-                  {catalogErrors &&
+                  {loadedCSV &&
                     <React.Fragment>
                       <Button variant="outline-dark" onClick={handlePreformanceButtonClick}>
                         Calculate Preformance
@@ -128,10 +127,9 @@ function App() {
   function handleLoadCSVButtonClick(event) {
     setDisplay(
       <LoadCSVFile
-        setCatalogErrors={setCatalogErrors}
+        setLoadedCSV={setLoadedCSV}
         setDisplay={setDisplay}
         setStatus={setStatus}
-        setThisTLD={setThisTLD}
         setThisFileName={setThisFileName}
         setLoading={setLoading}
       />)
@@ -192,39 +190,28 @@ function DisplayPreformance(props) {
           <div>
             <ListGroup.Item>
               {/* Only display error correction switch if there were errors found */}
-              {stocksArray[row].count > 0 &&
-                <Form>
-                  <Form.Check
-                    type="switch"
-                    id={stocksArray[row].listKey + "Switch"}
-                    label={errorMessages[stocksArray[row].listKey]}
-                    onClick={handleErrorSwitch}
-                  />
-                </Form>}
-              {stocksArray[row].count === 0 &&
-                <span>No errors found.</span>
-              }
+              
             </ListGroup.Item>
           </div>
         </Collapse>
       </React.Fragment>;
   }
+
+  const listHTML =
+    <Row className="justify-content-center">
+      <Col sm={6}>
+        <ListGroup className="mt-3">
+          {stocksArray}
+        </ListGroup>
+      </Col>
+    </Row>;
+
+  return listHTML;
 }
 
-const listHTML =
-  <Row className="justify-content-center">
-    <Col sm={6}>
-      <ListGroup className="mt-3">
-        {stocksArray}
-      </ListGroup>
-    </Col>
-  </Row>;
-
-return listHTML;
-}
 
 function LoadCSVFile(props) {
-  const [thisLocalTLD, setThisLocalTLD] = useState();
+
   const fileInput = React.createRef();
 
   function handleSetupFormSubmit(e) {
@@ -236,7 +223,6 @@ function LoadCSVFile(props) {
 
     const formData = new FormData();
     formData.append("file", fileInput.current.files[0]);
-    formData.append("tld", thisLocalTLD);
 
     const requestOptions = {
       method: 'PUT',
@@ -249,12 +235,13 @@ function LoadCSVFile(props) {
         const updatedStatus = { success: "", error: "" };
         if (data.status.success) {
           updatedStatus.success = data.status.success;
+          props.setLoadedCSV(true)
         } else if (data.status.error) {
           updatedStatus.error = data.status.error;
+          props.setLoadedCSV(false)
         }
         props.setStatus(updatedStatus)
         props.setThisFileName(data.fileName)
-        generateErrorOverview(props.setCatalogErrors)
         props.setLoading(false)
         props.setDisplay("")
       });
