@@ -6,7 +6,7 @@ import json
 import csv
 
 
-from datetime import datetime, timedelta, date
+from datetime import date
 from sqlalchemy import or_
 from io import TextIOWrapper
 
@@ -84,23 +84,29 @@ def loadCSV():
         reader = csv.DictReader(csvfile)
 
         # Dictionary of csv column names mapped to their Sales object property names
-        fieldnames = {"ticker": "ticker", "date": "date", "price": "priceSold", "shares": "shares"}
-        requiredFields = [f for f in fieldNames if f != "price"]
+        fieldnames = {"ticker": "ticker", "date": "date",
+                      "price": "priceSold", "shares": "shares"}
+        requiredFields = [f for f in fieldnames if f != "price"]
 
         for index, row in enumerate(reader):
-            # Check the very first row to see if there is are required columns present
-            if index == 0:
-                if missingColumn(row=row, columns=requiredFields):
-                    return {"status": {"error": "Header must have columns: 'ticker', 'date', 'shares'"}}
+            print(index, row)
+            # Check the very first row to see if there are required columns present
+            # if index == 0:
+                # Do an initial error check so that all of the required columns are present in the first row
+
             # else check if there are any errors in the csv file before saving to database
             # possible error is missing a required value, do not save that row at all
-
+            # if row is missing price fill in with data that will signal the need to get that data from API
+            # convert the date field into a date
+            # Must be of format YYYY-MM-DD
+            row["date"] = date.fromisoformat(row["date"])
+            if not row["price"]:
+                row["price"] = "missing"
             saveRow = Sales()
 
             for csvName, databaseName in fieldnames.items():
-                if csvName in row.keys():
-                    setattr(saveRow, databaseName,
-                            row[csvName])
+
+                setattr(saveRow, databaseName, row[csvName])
 
             db.session.add(saveRow)
 
@@ -108,8 +114,8 @@ def loadCSV():
 
         return {"status": {"success": f"{request.files['file'].filename} successfully loaded."}, "fileName": request.files['file'].filename[:201]}
 
-# Create a CSV file of everything stored in the Catalog table
 
+# Create a CSV file of everything stored in the Catalog table
 
 @ app.route('/downloadCSV', methods=['GET'])
 def downloadCSV():
