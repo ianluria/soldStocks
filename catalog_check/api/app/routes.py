@@ -86,33 +86,47 @@ def loadCSV():
         # Dictionary of csv column names mapped to their Sales object property names
         fieldnames = {"ticker": "ticker", "date": "date",
                       "price": "priceSold", "shares": "shares"}
+
         requiredFields = [f for f in fieldnames if f != "price"]
 
         for index, row in enumerate(reader):
-            print(index, row)
-            # Check the very first row to see if there are required columns present
-            # if index == 0:
-                # Do an initial error check so that all of the required columns are present in the first row
 
-            # else check if there are any errors in the csv file before saving to database
-            # possible error is missing a required value, do not save that row at all
+            print(index, row)
+
+            # Check if there are any errors in the row before saving it to the database
+
+            # Check that required fields are complete
+            if True in [
+                    True for cell in row if cell in requiredFields and cell == '']:
+                continue
+
+            # Check that the date cell can be converted into a date object
+            try:
+                # Must exactly be of format YYYY-MM-DD
+                row["date"] = date.fromisoformat(row["date"])
+            except (ValueError, TypeError):
+                print("date error true")
+                continue
+
             # if row is missing price fill in with data that will signal the need to get that data from API
-            # convert the date field into a date
-            # Must be of format YYYY-MM-DD
-            row["date"] = date.fromisoformat(row["date"])
             if not row["price"]:
                 row["price"] = "missing"
+
             saveRow = Sales()
 
             for csvName, databaseName in fieldnames.items():
 
                 setattr(saveRow, databaseName, row[csvName])
 
+            print(saveRow)
+
             db.session.add(saveRow)
 
         db.session.commit()
 
-        return {"status": {"success": f"{request.files['file'].filename} successfully loaded."}, "fileName": request.files['file'].filename[:201]}
+        # error where no rows were added due to errors !
+
+        return {"status": {"success": f"{request.files['file'].filename[:201]} successfully loaded."}, "fileName": request.files['file'].filename[:201]}
 
 
 # Create a CSV file of everything stored in the Catalog table
