@@ -122,6 +122,11 @@ def loadCSV():
 
             db.session.add(saveRow)
 
+        # Add data about file
+        thisMetadata = Metadata(
+            thisFileName=request.files['file'].filename[:999])
+
+        print("first sale: ", Sales.query.first())
         db.session.commit()
 
         # error where no rows were added due to errors !
