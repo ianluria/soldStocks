@@ -118,18 +118,16 @@ def loadCSV():
 
                 setattr(saveRow, databaseName, row[csvName])
 
-            print(saveRow)
-
             db.session.add(saveRow)
 
         # Only commit the session if actual data has been added to the table
         if Sales.query.first():
 
             # Add data about this file
-            thisMetadata = Metadata(
-                thisFileName=request.files['file'].filename[:999])
+            thisMetadata = Metadata()
+            thisMetadata.thisFileName = request.files['file'].filename[:999]
+            db.session.add(thisMetadata)
 
-            print("first sale: ", Sales.query.first())
             db.session.commit()
 
             return {"status": {"success": f"{request.files['file'].filename[:201]} successfully loaded."}, "fileName": request.files['file'].filename[:201]}
