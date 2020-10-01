@@ -122,19 +122,22 @@ def loadCSV():
 
             db.session.add(saveRow)
 
-        # Add data about file
-        thisMetadata = Metadata(
-            thisFileName=request.files['file'].filename[:999])
+        # Only commit the session if actual data has been added to the table
+        if Sales.query.first():
 
-        print("first sale: ", Sales.query.first())
-        db.session.commit()
+            # Add data about this file
+            thisMetadata = Metadata(
+                thisFileName=request.files['file'].filename[:999])
 
-        # error where no rows were added due to errors !
+            print("first sale: ", Sales.query.first())
+            db.session.commit()
 
-        return {"status": {"success": f"{request.files['file'].filename[:201]} successfully loaded."}, "fileName": request.files['file'].filename[:201]}
-
+            return {"status": {"success": f"{request.files['file'].filename[:201]} successfully loaded."}, "fileName": request.files['file'].filename[:201]}
+        else:
+            return {"status": {"error": "No rows were added to the database due to errors in your data."}}
 
 # Create a CSV file of everything stored in the Catalog table
+
 
 @ app.route('/downloadCSV', methods=['GET'])
 def downloadCSV():
