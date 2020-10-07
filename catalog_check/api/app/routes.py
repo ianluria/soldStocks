@@ -20,7 +20,6 @@ def index():
     return 'home page'
 
 # query database and group results by ticker symbol and by date
-# get current price information for each ticker
 # get historical price information for any missing historical sales
 # restructure list into a dict for return
 
@@ -35,15 +34,18 @@ def generateSalesPerformance():
     tickers = {sale.ticker for sale in distinctTickers}
 
     # Create a dictionary with each ticker
-    formattedSales = {ticker: {history: [], currentPrice: 0}
+    formattedSales = {ticker: {"history": [], "currentPrice": 0}
                       for ticker in tickers}
 
     # consider making a tuple
     sales = Sales.query.order_by(Sales.ticker, Sales.date).all()
 
     for sale in sales:
-        thisSalesDetails = {date: sale.date,
-                            priceSold: sale.priceSold, shares: sale.shares}
+
+        print("date: ", sale.date)
+
+        thisSalesDetails = {"date": sale.date.isoformat(),
+                            "priceSold": sale.priceSold, "shares": sale.shares}
         # Add this sale's details to the history list for the respective ticker
         formattedSales[sale.ticker]["history"].append(thisSalesDetails)
 
@@ -107,6 +109,8 @@ def loadCSV():
             except (ValueError, TypeError):
                 print("date error true")
                 continue
+
+            
 
             # if row is missing price fill in with data that will signal the need to get that data from API
             if not row["price"]:

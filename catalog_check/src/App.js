@@ -178,6 +178,15 @@ function DisplayPreformance(props) {
   // get preformance data and save locally
   const stocksArray = []
 
+  fetch('/generateSalesPerformance')
+    .then(response => response.json())
+    .then(data => { });
+
+
+
+
+
+
   for (let row in stocksArray) {
 
     stocksArray[row] =
@@ -210,7 +219,7 @@ function DisplayPreformance(props) {
 
   return listHTML;
 }
-
+  
 
 function LoadCSVFile(props) {
 
@@ -238,12 +247,12 @@ function LoadCSVFile(props) {
         if (data.status.success) {
           updatedStatus.success = data.status.success;
           props.setLoadedCSV(true)
+          props.setThisFileName(data.fileName)
         } else if (data.status.error) {
           updatedStatus.error = data.status.error;
           props.setLoadedCSV(false)
         }
         props.setStatus(updatedStatus)
-        props.setThisFileName(data.fileName)
         props.setLoading(false)
         props.setDisplay("")
       });
