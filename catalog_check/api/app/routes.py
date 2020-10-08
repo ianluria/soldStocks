@@ -4,6 +4,7 @@ from flask import request, send_file
 import re
 import json
 import csv
+import decimal
 
 
 from datetime import date
@@ -45,7 +46,9 @@ def generateSalesPerformance():
         print("date: ", sale.date)
 
         thisSalesDetails = {"date": sale.date.isoformat(),
-                            "priceSold": sale.priceSold, "shares": sale.shares}
+                            # Convert to decimal format
+                            "priceSold": str(decimal.Decimal(sale.priceSold).quantize(decimal.Decimal('1.00'))),
+                            "shares": sale.shares}
         # Add this sale's details to the history list for the respective ticker
         formattedSales[sale.ticker]["history"].append(thisSalesDetails)
 
@@ -109,8 +112,6 @@ def loadCSV():
             except (ValueError, TypeError):
                 print("date error true")
                 continue
-
-            
 
             # if row is missing price fill in with data that will signal the need to get that data from API
             if not row["price"]:
