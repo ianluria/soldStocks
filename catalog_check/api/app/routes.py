@@ -43,8 +43,6 @@ def generateSalesPerformance():
 
     for sale in sales:
 
-        print("date: ", sale.date)
-
         thisSalesDetails = {"date": sale.date.isoformat(),
                             # Convert to decimal format
                             "priceSold": str(decimal.Decimal(sale.priceSold).quantize(decimal.Decimal('1.00'))),
@@ -94,23 +92,58 @@ def loadCSV():
 
         requiredFields = [f for f in fieldnames if f != "price"]
 
+        # list of dicts with {"row":[],"errors":[]}
+        listOfErrors = []
+
+        # row is a dictionary
         for index, row in enumerate(reader):
 
-            print(index, row)
+            # Error checking
+            thisRowsErrors = {"index": index, "row": row, "errors": []}
 
-            # Check if there are any errors in the row before saving it to the database
+            # Check that required fields are complete for this row
+            missingFieldErrors = [
+                column for column in row if column in requiredFields and row[column] == '']
 
-            # Check that required fields are complete
-            if True in [
-                    True for cell in row if cell in requiredFields and cell == '']:
-                continue
+            # Check if there is at least one error in missingFieldErrors
+            missingFieldErrorsLength = len(missingFieldErrors)
+            if missingFieldErrorsLength > 0:
+                newError = 'The required fields: '
+                # Add each missing field to the error string
+                for fieldError in range(missingFieldErrorsLength):
+                    # Only add comma and space to elements that aren't the last
+                    if fieldError < missingFieldErrorsLength - 1:
+                        newError += missingFieldErrors[fieldError] + ", "
+                    else:
+                        newError += missingFieldErrors[fieldError] + " "
+                newError += "are missing in this row."
+                thisRowsErrors["errors"].append(newError)
 
             # Check that the date cell can be converted into a date object
             try:
                 # Must exactly be of format YYYY-MM-DD
                 row["date"] = date.fromisoformat(row["date"])
             except (ValueError, TypeError):
-                print("date error true")
+                thisRowsErrors["errors"].append(
+                    "Date must be EXACTLY of format YYYY-MM-DD.")
+
+            # Check that the date is in the proper range
+            if row["date"] > date.today():
+                thisRowsErrors["errors"].append(
+                    "Sale date cannot be greater than today.")
+            elif row["date"] < date(1990, 1, 1):
+                thisRowsErrors["errors"].append(
+                    "Sale date cannot be less than 1990.")
+
+            # Shares must be a positive non-zero number
+            if row["shares"] <= 0:
+                thisRowsErrors["errors"].append(
+                    "Shares must be a positive non-zero number.")
+
+            # If there are any errors, do not add row to database
+            # Add the row's error information to the master listOfErrors
+            if len(thisRowsErrors["errors"]) > 0:
+                listOfErrors.append(thisRowsErrors)
                 continue
 
             # if row is missing price fill in with data that will signal the need to get that data from API
@@ -135,7 +168,7 @@ def loadCSV():
 
             db.session.commit()
 
-            return {"status": {"success": f"{request.files['file'].filename[:201]} successfully loaded."}, "fileName": request.files['file'].filename[:201]}
+            return {"status": {"success": f"{request.files['file'].filename[:201]} successfully loaded."}, "fileName": request.files['file'].filename[:201], "errors": listOfErrors}
         else:
             return {"status": {"error": "No rows were added to the database due to errors in your data."}}
 
