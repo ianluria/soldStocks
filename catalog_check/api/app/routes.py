@@ -87,16 +87,22 @@ def loadCSV():
         reader = csv.DictReader(csvfile)
 
         # Dictionary of csv column names mapped to their Sales object property names
+        # CSV name : Sales object name
         fieldnames = {"ticker": "ticker", "date": "date",
                       "price": "priceSold", "shares": "shares"}
 
         requiredFields = [f for f in fieldnames if f != "price"]
+
+        # Check that there are required fieldnames present in the first row, else return error
 
         # list of dicts with {"row":[],"errors":[]}
         listOfErrors = []
 
         # row is a dictionary
         for index, row in enumerate(reader):
+
+            # Remove any extra unnecessary columns the user included
+            # row = {column for column in row if column in fieldnames.keys()}
 
             # Error checking
             thisRowsErrors = {"index": index, "row": row, "errors": []}
@@ -136,9 +142,17 @@ def loadCSV():
                     "Sale date cannot be less than 1990.")
 
             # Shares must be a positive non-zero number
-            if row["shares"] <= 0:
+            if decimal.Decimal(row["shares"]) <= 0:
                 thisRowsErrors["errors"].append(
                     "Shares must be a positive non-zero number.")
+
+            # Check length of ticker symbol
+            if len(row["ticker"] > 8):
+                thisRowsErrors["errors"].append(
+                    "Ticker symbol cannot be greater than eight characters")
+            else:
+                # Make sure the ticker symbol is uppercase
+                row["ticker"] = row["ticker"].upper
 
             # If there are any errors, do not add row to database
             # Add the row's error information to the master listOfErrors
@@ -163,7 +177,7 @@ def loadCSV():
 
             # Add data about this file
             thisMetadata = Metadata()
-            thisMetadata.thisFileName = request.files['file'].filename[:999]
+            thisMetadata.thisFileName = request.files['file'].filename[:500]
             db.session.add(thisMetadata)
 
             db.session.commit()

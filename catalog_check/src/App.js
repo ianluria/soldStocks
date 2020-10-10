@@ -219,7 +219,7 @@ function DisplayPreformance(props) {
 
   return listHTML;
 }
-  
+
 
 function LoadCSVFile(props) {
 
@@ -243,18 +243,21 @@ function LoadCSVFile(props) {
     fetch('/loadCSV', requestOptions)
       .then(response => response.json())
       .then(data => {
+        console.log(data);
         const updatedStatus = { success: "", error: "" };
         if (data.status.success) {
           updatedStatus.success = data.status.success;
           props.setLoadedCSV(true)
           props.setThisFileName(data.fileName)
+          props.setDisplay(<DisplayUploadErrors errors={data.errors} />)
         } else if (data.status.error) {
           updatedStatus.error = data.status.error;
           props.setLoadedCSV(false)
+          props.setDisplay("")
         }
         props.setStatus(updatedStatus)
         props.setLoading(false)
-        props.setDisplay("")
+
       });
   }
 
@@ -282,5 +285,52 @@ function LoadCSVFile(props) {
     </Row>
   );
 }
+
+function DisplayUploadErrors(props) {
+  const formattedErrorsArray = [];
+
+  for (let row in props.errors) {
+    formattedErrorsArray.push(
+      <Row id={"Error " + row.index}>
+        <Table bordered hover size="sm">
+          <thead>
+            <tr>
+              <th>CSV Row #</th>
+              <th>Ticker</th>
+              <th>Date</th>
+              <th>Shares</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>row.index</td>
+              <td>row.ticker</td>
+              <td>row.date</td>
+              <td>row.shares</td>
+              <td>row.price</td>
+            </tr>
+            {row.errors.map(error => {
+              return
+              <tr>
+                <td colSpan="5">{error}</td>
+              </tr>
+            })}
+          </tbody>
+        </Table>
+      </Row>
+    )
+  }
+
+  return (
+    <Row className="my-3">
+      <Container>
+        {formattedErrorsArray.map(value => value)}
+      </Container>
+    </Row>
+  );
+
+}
+
 
 export default App;
