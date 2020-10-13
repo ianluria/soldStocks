@@ -13,6 +13,7 @@ import Navbar from 'react-bootstrap/Navbar'
 import Nav from 'react-bootstrap/Nav'
 import Spinner from 'react-bootstrap/Spinner'
 import Alert from 'react-bootstrap/Alert'
+import Table from 'react-bootstrap/Table'
 import { Dropdown } from 'react-bootstrap';
 
 function App() {
@@ -249,7 +250,7 @@ function LoadCSVFile(props) {
           updatedStatus.success = data.status.success;
           props.setLoadedCSV(true)
           props.setThisFileName(data.fileName)
-          props.setDisplay(<DisplayUploadErrors errors={data.errors} />)
+          props.setDisplay(<DisplayUploadErrors problemsWithData={data.errors} />)
         } else if (data.status.error) {
           updatedStatus.error = data.status.error;
           props.setLoadedCSV(false)
@@ -287,11 +288,22 @@ function LoadCSVFile(props) {
 }
 
 function DisplayUploadErrors(props) {
+  
+  // Takes raw date string directly from API and returns a formatted string version  
+  function getDateString(dateStringFromAPI) {
+    const dateObject = new Date(dateStringFromAPI);
+    if (dateObject.toDateString() === "Invalid Date") {
+      return "";
+    }
+    return dateObject.toDateString().slice(4);
+  }
+
   const formattedErrorsArray = [];
 
-  for (let row in props.errors) {
+  for (let error in props.problemsWithData) {
+    error = props.problemsWithData[error]
     formattedErrorsArray.push(
-      <Row id={"Error " + row.index}>
+      <Row id={"Error " + error.index}>
         <Table bordered hover size="sm">
           <thead>
             <tr>
@@ -304,17 +316,18 @@ function DisplayUploadErrors(props) {
           </thead>
           <tbody>
             <tr>
-              <td>row.index</td>
-              <td>row.ticker</td>
-              <td>row.date</td>
-              <td>row.shares</td>
-              <td>row.price</td>
+              <td>{error.index}</td>
+              <td>{error.row.ticker}</td>
+              <td>{getDateString(error.row.date)}</td>
+              <td>{error.row.shares}</td>
+              <td>{error.row.price}</td>
             </tr>
-            {row.errors.map(error => {
-              return
-              <tr>
-                <td colSpan="5">{error}</td>
-              </tr>
+            {error.errors.map(details => {
+              return (
+                <tr>
+                  <td colSpan="5">{details}</td>
+                </tr>
+              );
             })}
           </tbody>
         </Table>
@@ -325,7 +338,7 @@ function DisplayUploadErrors(props) {
   return (
     <Row className="my-3">
       <Container>
-        {formattedErrorsArray.map(value => value)}
+        {formattedErrorsArray}
       </Container>
     </Row>
   );

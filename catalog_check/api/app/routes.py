@@ -125,34 +125,36 @@ def loadCSV():
                 newError += "are missing in this row."
                 thisRowsErrors["errors"].append(newError)
 
-            # Check that the date cell can be converted into a date object
-            try:
-                # Must exactly be of format YYYY-MM-DD
-                row["date"] = date.fromisoformat(row["date"])
-            except (ValueError, TypeError):
-                thisRowsErrors["errors"].append(
-                    "Date must be EXACTLY of format YYYY-MM-DD.")
+            if "date" not in missingFieldErrors:
+                # Check that the date cell can be converted into a date object
+                try:
+                    # Must exactly be of format YYYY-MM-DD
+                    row["date"] = date.fromisoformat(row["date"])
+                    # Check that the date is in the proper range
+                    if row["date"] > date.today():
+                        thisRowsErrors["errors"].append(
+                            "Sale date cannot be greater than today.")
+                    elif row["date"] < date(1990, 1, 1):
+                        thisRowsErrors["errors"].append(
+                            "Sale date cannot be less than 1990.")
+                except (ValueError, TypeError):
+                    thisRowsErrors["errors"].append(
+                        "Date must be EXACTLY of format YYYY-MM-DD.")
 
-            # Check that the date is in the proper range
-            if row["date"] > date.today():
-                thisRowsErrors["errors"].append(
-                    "Sale date cannot be greater than today.")
-            elif row["date"] < date(1990, 1, 1):
-                thisRowsErrors["errors"].append(
-                    "Sale date cannot be less than 1990.")
+            if "shares" not in missingFieldErrors:
+                # Shares must be a positive non-zero number
+                if decimal.Decimal(row["shares"]) <= 0:
+                    thisRowsErrors["errors"].append(
+                        "Shares must be a positive non-zero number.")
 
-            # Shares must be a positive non-zero number
-            if decimal.Decimal(row["shares"]) <= 0:
-                thisRowsErrors["errors"].append(
-                    "Shares must be a positive non-zero number.")
-
-            # Check length of ticker symbol
-            if len(row["ticker"] > 8):
-                thisRowsErrors["errors"].append(
-                    "Ticker symbol cannot be greater than eight characters")
-            else:
-                # Make sure the ticker symbol is uppercase
-                row["ticker"] = row["ticker"].upper
+            if "ticker" not in missingFieldErrors:
+                # Check length of ticker symbol
+                if len(row["ticker"]) > 8:
+                    thisRowsErrors["errors"].append(
+                        "Ticker symbol cannot be greater than eight characters")
+                else:
+                    # Make sure the ticker symbol is uppercase
+                    row["ticker"] = row["ticker"].upper()
 
             # If there are any errors, do not add row to database
             # Add the row's error information to the master listOfErrors
