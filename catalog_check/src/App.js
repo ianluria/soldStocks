@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faAngleDown } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
+
+import "./App.css";
 
 import ListGroup from 'react-bootstrap/ListGroup';
 import Collapse from 'react-bootstrap/Collapse';
 import Form from 'react-bootstrap/Form';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
-import Button from 'react-bootstrap/Button'
-import Col from 'react-bootstrap/Col'
-import Navbar from 'react-bootstrap/Navbar'
-import Nav from 'react-bootstrap/Nav'
-import Spinner from 'react-bootstrap/Spinner'
-import Alert from 'react-bootstrap/Alert'
-import Table from 'react-bootstrap/Table'
+import Button from 'react-bootstrap/Button';
+import Col from 'react-bootstrap/Col';
+import Navbar from 'react-bootstrap/Navbar';
+import Nav from 'react-bootstrap/Nav';
+import Spinner from 'react-bootstrap/Spinner';
+import Alert from 'react-bootstrap/Alert';
+import Table from 'react-bootstrap/Table';
 import { Dropdown } from 'react-bootstrap';
 
 function App() {
@@ -287,8 +289,9 @@ function LoadCSVFile(props) {
   );
 }
 
+// Need to display default setting if there are not errors in data
 function DisplayUploadErrors(props) {
-  
+
   // Takes raw date string directly from API and returns a formatted string version  
   function getDateString(dateStringFromAPI) {
     const dateObject = new Date(dateStringFromAPI);
@@ -296,6 +299,16 @@ function DisplayUploadErrors(props) {
       return "";
     }
     return dateObject.toDateString().slice(4);
+  }
+
+  function colorMissingDataCell(data) {
+
+    if (!data) {
+      return <td className="missingDataRed"> </td>
+    } else {
+      return <td>{data}</td>
+    }
+
   }
 
   const formattedErrorsArray = [];
@@ -317,9 +330,9 @@ function DisplayUploadErrors(props) {
           <tbody>
             <tr>
               <td>{error.index}</td>
-              <td>{error.row.ticker}</td>
-              <td>{getDateString(error.row.date)}</td>
-              <td>{error.row.shares}</td>
+              {colorMissingDataCell(error.row.ticker)}
+              {colorMissingDataCell(getDateString(error.row.date))}
+              {colorMissingDataCell(error.row.shares)}
               <td>{error.row.price}</td>
             </tr>
             {error.errors.map(details => {
