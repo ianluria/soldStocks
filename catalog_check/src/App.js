@@ -291,7 +291,7 @@ function LoadCSVFile(props) {
 
 // Need to display default setting if there are not errors in data
 function DisplayUploadErrors(props) {
-
+  
   // Takes raw date string directly from API and returns a formatted string version  
   function getDateString(dateStringFromAPI) {
     const dateObject = new Date(dateStringFromAPI);
@@ -316,8 +316,22 @@ function DisplayUploadErrors(props) {
   for (let error in props.problemsWithData) {
     error = props.problemsWithData[error]
     formattedErrorsArray.push(
-      <Row id={"Error " + error.index}>
-        <Table bordered hover size="sm">
+      <tr>
+        <td>{error.index}</td>
+        {colorMissingDataCell(error.row.ticker)}
+        {colorMissingDataCell(getDateString(error.row.date))}
+        {colorMissingDataCell(error.row.shares)}
+        <td>{error.row.price}</td>
+      </tr>
+    )
+  }
+
+  return (
+    <Row className="my-3">
+      <Container>
+      <p className="h4 text-center">Errors Found In Your Upload</p>
+      <p className="text-center">These rows were not added to your database. Please correct and re-upload CSV.</p>
+        <Table bordered striped hover size="sm">
           <thead>
             <tr>
               <th>CSV Row #</th>
@@ -328,34 +342,12 @@ function DisplayUploadErrors(props) {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>{error.index}</td>
-              {colorMissingDataCell(error.row.ticker)}
-              {colorMissingDataCell(getDateString(error.row.date))}
-              {colorMissingDataCell(error.row.shares)}
-              <td>{error.row.price}</td>
-            </tr>
-            {error.errors.map(details => {
-              return (
-                <tr>
-                  <td colSpan="5">{details}</td>
-                </tr>
-              );
-            })}
+            {formattedErrorsArray}
           </tbody>
         </Table>
-      </Row>
-    )
-  }
-
-  return (
-    <Row className="my-3">
-      <Container>
-        {formattedErrorsArray}
       </Container>
     </Row>
   );
-
 }
 
 
