@@ -34,7 +34,7 @@ function App() {
       .then(data => {
         if (data.loaded) {
           setThisFileName(data.thisFileName)
-
+          setLoadedCSV(true)
         } else {
           setStatus({ success: "", error: "Load stock sales CSV to get started." })
         }
@@ -100,7 +100,7 @@ function App() {
           </Container>
         }
         {loading &&
-          <Container fluid>
+          <Container fluid id="loading">
             <Row className="justify-content-center my-3">
               <Spinner animation="border" role="status">
                 <span className="sr-only">Loading...</span>
@@ -291,7 +291,7 @@ function LoadCSVFile(props) {
 
 // Need to display default setting if there are not errors in data
 function DisplayUploadErrors(props) {
-  
+
   // Takes raw date string directly from API and returns a formatted string version  
   function getDateString(dateStringFromAPI) {
     const dateObject = new Date(dateStringFromAPI);
@@ -329,8 +329,8 @@ function DisplayUploadErrors(props) {
   return (
     <Row className="my-3">
       <Container>
-      <p className="h4 text-center">Errors Found In Your Upload</p>
-      <p className="text-center">These rows were not added to your database. Please correct and re-upload CSV.</p>
+        <p className="h4 text-center">Errors Found In Your Upload</p>
+        <p className="text-center">These rows were not added to your database. Please correct and re-upload CSV.</p>
         <Table bordered striped hover size="sm">
           <thead>
             <tr>
