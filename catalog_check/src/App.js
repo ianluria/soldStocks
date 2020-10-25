@@ -226,6 +226,7 @@ function DisplayPreformance(props) {
 
 function LoadCSVFile(props) {
 
+  const [thisFileName, setThisFileName] = useState("Upload CSV File");
   const fileInput = React.createRef();
 
   function handleSetupFormSubmit(e) {
@@ -264,16 +265,21 @@ function LoadCSVFile(props) {
       });
   }
 
+  function formFilechangeHandler(e) {
+    setThisFileName(fileInput.current.files[0].name)
+  }
+
   return (
     <Row className="my-3">
       <Container as="form" onSubmit={handleSetupFormSubmit}>
         <Row className="justify-content-center">
-          <Col sm={4} >
+          <Col >
             <Form.Group controlId="formGroupFile">
               <Form.File
                 id="usersCSVFile"
-                label="Upload CSV File"
+                label={thisFileName}
                 ref={fileInput}
+                onChange={formFilechangeHandler}
                 custom
               />
             </Form.Group>
