@@ -44,15 +44,44 @@ function App() {
 
   return (
     <Container fluid>
-      <Row className="my-3">
+      <Row className="mt-3">
         <Container fluid>
           <Navbar bg="dark" variant="dark" fluid>
             <Navbar.Brand href="#home" className="mr-3">Sold Stocks</Navbar.Brand>
-            {loadedCSV &&
-              <Nav className="justify-content-end w-100">
+            <Nav className="justify-content-end w-100">
+              {loadedCSV &&
                 <Nav.Item>
                   <span className="text-light">CSV loaded: "<span className="text-monospace">{thisFileName}</span>"</span>
                 </Nav.Item>
+              }
+            </Nav>
+          </Navbar>
+        </Container>
+      </Row>
+      <Row className="mb-3">
+        <Container fluid>
+          <Navbar bg="dark" variant="dark" fluid>
+            {!loading &&
+              <Nav className="justify-content-around w-100">
+                <Nav.Item>
+                  <Button variant="outline-light" onClick={handleLoadCSVButtonClick}>
+                    Load CSV File
+                </Button>
+                </Nav.Item>
+                {loadedCSV &&
+                  <React.Fragment>
+                    <Nav.Item>
+                      <Button variant="outline-light" onClick={handlePreformanceButtonClick}>
+                        Calculate Preformance
+                    </Button>
+                    </Nav.Item>
+                    <Nav.Item>
+                      <Button Button variant="outline-light" onClick={downloadCSV}>
+                        Download CSV
+                    </Button>
+                    </Nav.Item>
+                  </React.Fragment>
+                }
               </Nav>
             }
           </Navbar>
@@ -61,38 +90,19 @@ function App() {
       <Row>
         {!loading &&
           <Container fluid>
-            <Row className="my-3">
-              <Container fluid>
-                <Row className="justify-content-center">
-                  {status.success &&
-                    <Alert variant="success">
-                      {status.success}
-                    </Alert>
-                  }
-                  {status.error &&
-                    <Alert variant="danger">
-                      {status.error}
-                    </Alert>
-                  }
-                </Row>
-                <Row className="justify-content-around">
-                  <Button variant="outline-dark" onClick={handleLoadCSVButtonClick}>
-                    Load CSV File
-                  </Button>
-                  {loadedCSV &&
-                    <React.Fragment>
-                      <Button variant="outline-dark" onClick={handlePreformanceButtonClick}>
-                        Calculate Preformance
-                      </Button>
-                      <Button Button variant="outline-dark" onClick={downloadCSV}>
-                        Download CSV
-                      </Button>
-                    </React.Fragment>
-                  }
-                </Row>
-              </Container>
+            <Row className="my-3 justify-content-center">
+              {status.success &&
+                <Alert variant="success">
+                  {status.success}
+                </Alert>
+              }
+              {status.error &&
+                <Alert variant="danger">
+                  {status.error}
+                </Alert>
+              }
             </Row>
-            <Row className="my-3">
+            <Row className="my-3 justify-content-center">
               <Container fluid>
                 {display}
               </Container>
@@ -273,7 +283,7 @@ function LoadCSVFile(props) {
     <Row className="my-3">
       <Container as="form" onSubmit={handleSetupFormSubmit}>
         <Row className="justify-content-center">
-          <Col >
+          <Col>
             <Form.Group controlId="formGroupFile">
               <Form.File
                 id="usersCSVFile"
