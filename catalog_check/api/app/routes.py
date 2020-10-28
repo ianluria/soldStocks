@@ -71,7 +71,7 @@ def loadCSV():
     def allowed_file(filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'csv'}
 
-     # Error checking for incomplete file upload
+    # Error checking for incomplete file upload
     if 'file' not in request.files or request.files['file'].filename == '' or not allowed_file(request.files['file'].filename):
         return {"status": {"error": "Must include a CSV file."}}
 
@@ -178,9 +178,13 @@ def loadCSV():
         if Sales.query.first():
 
             # Add data about this file
-            thisMetadata = Metadata()
-            thisMetadata.thisFileName = request.files['file'].filename[:500]
-            db.session.add(thisMetadata)
+            thisFilesInfo = Metadata.query.first()
+
+            if not thisFilesInfo:
+                thisFilesInfo = Metadata()
+
+            thisFilesInfo.thisFileName = request.files['file'].filename[:500]
+            db.session.add(thisFilesInfo)
 
             db.session.commit()
 

@@ -60,25 +60,25 @@ function App() {
       </Row>
       <Row className="mb-3">
         <Container fluid>
-          <Navbar bg="dark" variant="dark" fluid>
+          <Navbar bg="dark" variant="dark" fluid >
             {!loading &&
               <Nav className="justify-content-around w-100">
                 <Nav.Item>
-                  <Button variant="outline-light" onClick={handleLoadCSVButtonClick}>
+                  <Button variant="outline-light" onClick={handleLoadCSVButtonClick} size="sm" className="mb-2">
                     Load CSV File
-                </Button>
+                  </Button>
                 </Nav.Item>
                 {loadedCSV &&
                   <React.Fragment>
                     <Nav.Item>
-                      <Button variant="outline-light" onClick={handlePreformanceButtonClick}>
+                      <Button variant="outline-light" onClick={handlePreformanceButtonClick} size="sm">
                         Calculate Preformance
-                    </Button>
+                      </Button>
                     </Nav.Item>
                     <Nav.Item>
-                      <Button Button variant="outline-light" onClick={downloadCSV}>
+                      <Button Button variant="outline-light" onClick={downloadCSV} size="sm">
                         Download CSV
-                    </Button>
+                      </Button>
                     </Nav.Item>
                   </React.Fragment>
                 }
@@ -308,6 +308,10 @@ function LoadCSVFile(props) {
 // Need to display default setting if there are not errors in data
 function DisplayUploadErrors(props) {
 
+  if (props.problemsWithData.length === 0) {
+    return null;
+  }
+
   // Takes raw date string directly from API and returns a formatted string version  
   function getDateString(dateStringFromAPI) {
     const dateObject = new Date(dateStringFromAPI);
@@ -324,7 +328,6 @@ function DisplayUploadErrors(props) {
     } else {
       return <td>{data}</td>
     }
-
   }
 
   const formattedErrorsArray = [];
