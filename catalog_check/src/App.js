@@ -168,11 +168,16 @@ function App() {
   }
 
 }
+
+
+
+// ADD LOADING ICONS
 // take api results and transform into an Array.  calculate the total return for each ticker symbol and display date break downs by Dropdown. for more than 10 transactions provide a new display element
 function DisplayPreformance(props) {
 
   // Used to track which collapse list items should be open
   const [open, setOpen] = useState({});
+  // const [stocksArray, setStocksArray] = useState([]);
 
   // Expand collapse list item when 'parent' list item is clicked
   function handleListItemClick(e) {
@@ -186,51 +191,57 @@ function DisplayPreformance(props) {
     return;
   }
 
-
-
-  // get preformance data and save locally
-  const stocksArray = []
-
   fetch('/generateSalesPerformance')
     .then(response => response.json())
-    .then(data => { });
+    .then(data => {
 
+      const stocksArray = []
+      console.log("data");
+      for (const element in data) {
+        let rest;
+        const newTicker = ({ ...rest } = data[element]);
+        newTicker.name = element;
+        stocksArray.push(newTicker)
+      }
 
+      console.log(stocksArray);
 
+      for (let row in stocksArray) {
 
-
-
-  for (let row in stocksArray) {
-
-    stocksArray[row] =
-      <React.Fragment key={stocksArray[row].listKey}>
-        <ListGroup.Item id={stocksArray[row].listKey} onClick={handleListItemClick}>
-          {stocksArray[row].label} : {stocksArray[row].performance}
-          <FontAwesomeIcon icon={faAngleDown} className="rotateIcon ml-3" />
-        </ListGroup.Item>
-
-        <Collapse id={stocksArray[row].listKey + "Collapse"} in={open[stocksArray[row].listKey]}>
-          {/* Div added to smooth collapse transition */}
-          <div>
-            <ListGroup.Item>
-              {/* Only display error correction switch if there were errors found */}
-
+        stocksArray[row] =
+          <React.Fragment key={stocksArray[row].listKey}>
+            <ListGroup.Item id={stocksArray[row].listKey} onClick={handleListItemClick}>
+              {stocksArray[row].label} : {stocksArray[row].performance}
+              <FontAwesomeIcon icon={faAngleDown} className="rotateIcon ml-3" />
             </ListGroup.Item>
-          </div>
-        </Collapse>
-      </React.Fragment>;
-  }
 
-  const listHTML =
-    <Row className="justify-content-center">
-      <Col sm={6}>
-        <ListGroup className="mt-3">
-          {stocksArray}
-        </ListGroup>
-      </Col>
-    </Row>;
+            <Collapse id={stocksArray[row].listKey + "Collapse"} in={open[stocksArray[row].listKey]}>
+              {/* Div added to smooth collapse transition */}
+              <div>
+                <ListGroup.Item>
+                  {/* Only display error correction switch if there were errors found */}
 
-  return listHTML;
+                </ListGroup.Item>
+              </div>
+            </Collapse>
+          </React.Fragment>;
+      }
+
+      const listHTML =
+        <Row className="justify-content-center">
+          <Col sm={6}>
+            <ListGroup className="mt-3">
+              {stocksArray}
+            </ListGroup>
+          </Col>
+        </Row>;
+
+      // return listHTML;
+      props.setDisplay(listHTML)
+
+    });
+
+    return("loading")
 }
 
 
