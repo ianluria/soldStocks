@@ -191,37 +191,43 @@ function DisplayPreformance(props) {
     return;
   }
 
+  function generateDropdownListElementForHistory(element) {
+    return (
+      <ListGroup.Item>
+        <p>{element.priceSold}, {element.shares}, {element.date}</p>
+      </ListGroup.Item>
+    );
+  }
+
   fetch('/generateSalesPerformance')
     .then(response => response.json())
     .then(data => {
 
       const stocksArray = []
-      console.log("data");
+      // console.log("data");
       for (const element in data) {
         let rest;
         const newTicker = ({ ...rest } = data[element]);
-        newTicker.name = element;
+        newTicker.ticker = element;
+        newTicker.history = newTicker.history.map(generateDropdownListElementForHistory);
         stocksArray.push(newTicker)
       }
 
-      console.log(stocksArray);
 
       for (let row in stocksArray) {
 
         stocksArray[row] =
-          <React.Fragment key={stocksArray[row].listKey}>
-            <ListGroup.Item id={stocksArray[row].listKey} onClick={handleListItemClick}>
-              {stocksArray[row].label} : {stocksArray[row].performance}
+          <React.Fragment key={stocksArray[row].ticker}>
+            <ListGroup.Item id={stocksArray[row].ticker} onClick={handleListItemClick}>
+              {stocksArray[row].ticker} : "performance here"
               <FontAwesomeIcon icon={faAngleDown} className="rotateIcon ml-3" />
             </ListGroup.Item>
 
-            <Collapse id={stocksArray[row].listKey + "Collapse"} in={open[stocksArray[row].listKey]}>
+            <Collapse id={stocksArray[row].ticker + "Collapse"} in={open[stocksArray[row].ticker]}>
               {/* Div added to smooth collapse transition */}
               <div>
-                <ListGroup.Item>
-                  {/* Only display error correction switch if there were errors found */}
-
-                </ListGroup.Item>
+                <p>here</p>
+                {stocksArray[row].history}
               </div>
             </Collapse>
           </React.Fragment>;
@@ -241,7 +247,7 @@ function DisplayPreformance(props) {
 
     });
 
-    return("loading")
+  return ("loading")
 }
 
 
